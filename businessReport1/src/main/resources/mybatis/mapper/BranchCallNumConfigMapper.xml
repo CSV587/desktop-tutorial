@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.BranchCallNumConfigMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.BranchCallNumConfig">
+        <selectKey keyProperty="branchId" resultType="string" order="BEFORE">
+            select sys_guid() as branchId from DUAL
+        </selectKey>
+        insert into T_CPIC_BRANCHCALLNUMCONFIG(BRANCHID,BRANCHNAME,CALLNUM,CALLMAXNUM,
+        FST,LMT,FOID,LOID,VALIDSTATE,CALLNUMCONFIGID)
+        values(#{branchId},#{branchName},#{callNum},#{callMaxNum},#{fst},#{lmt},#{foid},
+        #{loid},#{validState},#{callNumConfigId})
+    </insert>
+
+    <update id="edit" parameterType="com.hy.cpic.entities.BranchCallNumConfig">
+        update T_CPIC_BRANCHCALLNUMCONFIG
+        <trim prefix="set" suffixOverrides=",">
+            <if test="branchId!=null">BRANCHID=#{branchId},</if>
+            <if test="branchName!=null">BRANCHNAME=#{branchName},</if>
+            <if test="callNum!=null">CALLNUM=#{callNum},</if>
+            <if test="callMaxNum!=null">CALLMAXNUM=#{callMaxNum},</if>
+            <if test="fst!=null">FST=#{fst},</if>
+            <if test="lmt!=null">LMT=#{lmt},</if>
+            <if test="foid!=null">FOID=#{foid},</if>
+            <if test="loid!=null">LOID=#{loid},</if>
+            <if test="validState!=null">VALIDSTATE=#{validState},</if>
+            <if test="callNumConfigId!=null">CALLNUMCONFIGID=#{callNumConfigId}</if>
+        </trim>
+        where BRANCHID=#{branchId}
+    </update>
+
+    <update id="editByBranchName" parameterType="com.hy.cpic.entities.BranchCallNumConfig">
+        update T_CPIC_BRANCHCALLNUMCONFIG
+        <trim prefix="set" suffixOverrides=",">
+            <if test="branchId!=null">BRANCHID=#{branchId},</if>
+            <if test="branchName!=null">BRANCHNAME=#{branchName},</if>
+            <if test="callNum!=null">CALLNUM=#{callNum},</if>
+            <if test="callMaxNum!=null">CALLMAXNUM=#{callMaxNum},</if>
+            <if test="fst!=null">FST=#{fst},</if>
+            <if test="lmt!=null">LMT=#{lmt},</if>
+            <if test="foid!=null">FOID=#{foid},</if>
+            <if test="loid!=null">LOID=#{loid},</if>
+            <if test="validState!=null">VALIDSTATE=#{validState},</if>
+            <if test="callNumConfigId!=null">CALLNUMCONFIGID=#{callNumConfigId}</if>
+        </trim>
+        where BRANCHNAME=#{branchName}
+        and VALIDSTATE='valid'
+    </update>
+
+    <select id="queryBranchCallNumConfig"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select t.BRANCHID as branchId,t.BRANCHNAME as branchName,t.CALLNUM as callNum,
+        t.CALLMAXNUM as callMaxNum,t.FST as fst,t.LMT as lmt,t.FOID as foid,t.LOID as loid,
+        t.CALLNUMCONFIGID as callNumConfigId,t.VALIDSTATE as validState
+        from T_CPIC_BRANCHCALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.CALLNUMCONFIGID = #{callNumConfigId}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <update id="deleteConfig" parameterType="com.hy.cpic.entities.BranchCallNumConfig">
+        update T_CPIC_BRANCHCALLNUMCONFIG
+        <trim prefix="set" suffixOverrides=",">
+            <if test="branchId!=null">BRANCHID=#{branchId},</if>
+            <if test="branchName!=null">BRANCHNAME=#{brachName},</if>
+            <if test="callNum!=null">CALLNUM=#{callNum},</if>
+            <if test="callMaxNum!=null">CALLMAXNUM=#{callMaxNum},</if>
+            <if test="fst!=null">FST=#{fst},</if>
+            <if test="lmt!=null">LMT=#{lmt},</if>
+            <if test="foid!=null">FOID=#{foid},</if>
+            <if test="loid!=null">LOID=#{loid},</if>
+            <if test="validState!=null">VALIDSTATE=#{validState},</if>
+            <if test="callNumConfigId!=null">CALLNUMCONFIGID=#{callNumConfigId}</if>
+        </trim>
+        where BRANCHID=#{branchId}
+    </update>
+
+    <select id="queryById"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select t.BRANCHID as branchId,t.BRANCHNAME as branchName,t.CALLNUM as callNum,
+        t.CALLMAXNUM as callMaxNum,t.FST as fst,t.LMT as lmt,t.FOID as foid,t.LOID as loid,
+        t.CALLNUMCONFIGID as callNumConfigId,t.VALIDSTATE as validState
+        from T_CPIC_BRANCHCALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="branchId!=null and branchId!=''">
+            and BRANCHID=#{branchId}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="queryByCallNumConfigId"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select t.BRANCHID, t.BRANCHNAME as branchName, t.CALLNUM as callNum, t.CALLMAXNUM as callMaxNum
+        from T_CPIC_BRANCHCALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+          and t.CALLNUMCONFIGID = #{callNumConfigId}
+          and t.CALLNUM &lt;> 0
+    </select>
+
+    <select id="queryBranchCallNumConfigByName"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select t.BRANCHID as branchId,t.BRANCHNAME as branchName,t.CALLNUM as callNum,
+        t.CALLMAXNUM as callMaxNum,t.FST as fst,t.LMT as lmt,t.FOID as foid,t.LOID as loid,
+        t.CALLNUMCONFIGID as callNumConfigId,t.VALIDSTATE as validState
+        from T_CPIC_BRANCHCALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.CALLNUMCONFIGID = #{callNumConfigId}
+        </if>
+        <if test="branchName!=null and branchName!=''">
+            and t.BRANCHNAME = #{branchName}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="queryBranchCallNumConfigByNameAndId"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select t.BRANCHID as branchId,t.BRANCHNAME as branchName,t.CALLNUM as callNum,
+        t.CALLMAXNUM as callMaxNum,t.FST as fst,t.LMT as lmt,t.FOID as foid,t.LOID as loid,
+        t.CALLNUMCONFIGID as callNumConfigId,t.VALIDSTATE as validState
+        from T_CPIC_BRANCHCALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.CALLNUMCONFIGID = #{callNumConfigId}
+        </if>
+        <if test="branchName!=null and branchName!=''">
+            and t.BRANCHNAME = #{branchName}
+        </if>
+        <if test="branchId!=null and branchId!=''">
+            and t.BRANCHID != #{branchId}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="queryCallNumConfigById"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.CallNumConfigPage">
+        select t.ID as id,t.NAME as name,t.RULEID as ruleId,t.CALLMAXNUM as callMaxNum, t.PROJECTID as projectId, t.BUSINESSTYPE as businessType
+        from T_CPIC_CALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.ID = #{callNumConfigId}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="querySurplusNum" parameterType="String" resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select count(1) as surplusNum,t.BRANCHNAME
+        from ICM.T_CPIC_INSUREDINTENTION t
+        where 1=1
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.CALLNUMCONFIGID = #{callNumConfigId}
+        </if>
+        <if test="businessTypeList != null">
+            and t.BUSINESSTYPE in
+            <foreach collection="businessTypeList" item="businessTypeList" index="index" open="(" close=")" separator=",">
+                #{businessTypeList}
+            </foreach>
+        </if>
+        group by t.BRANCHNAME
+    </select>
+
+</mapper>

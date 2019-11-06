@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.mapper.oracle.CallInfoStatisticsMapper">
+
+    <insert id="save" parameterType="com.hy.entities.CallInfoStatistics">
+        insert all
+        <foreach collection="list" item="item" index="index" separator="">
+            into T_BUSINESS_RECORDINFO(ID,UUID,
+            RECORDSTARTTIME,RECORDENDTIME,CHANNELSTARTTIME,CHANNELENDTIME,DURATION,CALLNUMBER,ISCONNECT,PROTYPE,
+            COLUMN1,COLUMN2,COLUMN3,COLUMN4,COLUMN5,COLUMN6,COLUMN7,COLUMN8,COLUMN9,COLUMN10,
+            COLUMN11,COLUMN12,COLUMN13,COLUMN14,COLUMN15,COLUMN16,COLUMN17,COLUMN18,COLUMN19,COLUMN20,
+            COLUMN21,COLUMN22,COLUMN23,COLUMN24,COLUMN25,COLUMN26,COLUMN27,COLUMN28,COLUMN29,COLUMN30,
+            COLUMN31,COLUMN32,COLUMN33,COLUMN34,COLUMN35,COLUMN36,COLUMN37,COLUMN38,COLUMN39,COLUMN40,
+            COLUMN41,COLUMN42,COLUMN43,COLUMN44,COLUMN45,COLUMN46,COLUMN47,COLUMN48,COLUMN49,COLUMN50)
+            values
+            (#{item.id},#{item.uuid},#{item.recordStartTime},#{item.recordEndTime},#{item.channelStartTime},#{item.channelEndTime},
+            #{item.duration},#{item.callNumber},#{item.isConnect},#{item.proType},
+            #{item.column1},#{item.column2},#{item.column3},#{item.column4},#{item.column5},
+            #{item.column6},#{item.column7},#{item.column8},#{item.column9},#{item.column10},
+            #{item.column11},#{item.column12},#{item.column13},#{item.column14},#{item.column15},
+            #{item.column16},#{item.column17},#{item.column18},#{item.column19},#{item.column20},
+            #{item.column21},#{item.column22},#{item.column23},#{item.column24},#{item.column25},
+            #{item.column26},#{item.column27},#{item.column28},#{item.column29},#{item.column30},
+            #{item.column31},#{item.column32},#{item.column33},#{item.column34},#{item.column35},
+            #{item.column36},#{item.column37},#{item.column38},#{item.column39},#{item.column40},
+            #{item.column41},#{item.column42},#{item.column43},#{item.column44},#{item.column45},
+            #{item.column46},#{item.column47},#{item.column48},#{item.column49},#{item.column50})
+        </foreach>
+        select 1 from dual
+    </insert>
+
+    <select id="queryCallBack" resultType="com.hy.reporting.callback.page.CallBackPage">
+        select t.ID as id,
+        t.COLUMN4 as customId,
+        t.COLUMN5 as polNumber,
+        t.COLUMN10 as secondSaryType,
+        t.COLUMN12 as polStatus,
+        t.COLUMN20 as flowId,
+        t.COLUMN13 as callCount,
+        (case when t.ISCONNECT = 'connect' then '接通' else '未接通' end) as onState,
+        t.RECORDSTARTTIME as startTime,
+        t.RECORDENDTIME as endTime,
+        t.COLUMN15 as callResult,
+        t.COLUMN14 as queAnswer,
+        t.COLUMN16 as closeStatus,
+        t.COLUMN17 as pushLabel,
+        t.UUID as uuid
+        from T_BUSINESS_RECORDINFO t
+        where t.PROTYPE = '失效回访'
+        <if test="startTime!=null">
+            and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        </if>
+        <if test="customId!=null and customId!='' ">
+            and t.COLUMN4 = #{customId}
+        </if>
+        <if test="callCount!=null and callCount!='' ">
+            and t.COLUMN13 = #{callCount}
+        </if>
+        <if test="onState!=null and onState!='' ">
+            and t.ISCONNECT = #{onState}
+        </if>
+        <if test="polNumber!=null and polNumber!='' ">
+            and t.COLUMN5 = #{polNumber}
+        </if>
+        <if test="projectId!=null and projectId!='' ">
+            and t.COLUMN6 = #{projectId}
+        </if>
+        <if test="flowId!=null and flowId!='' ">
+            and t.COLUMN19 = #{flowId}
+        </if>
+        <if test="pushLabel!=null and pushLabel!='' ">
+            and t.COLUMN17 = #{pushLabel}
+        </if>
+        <if test="closeStatus!=null and closeStatus!='' ">
+            and t.COLUMN16 = #{closeStatus}
+        </if>
+        <if test="queAnswer!=null and queAnswer!='' ">
+            and t.COLUMN14 = #{queAnswer}
+        </if>
+        order by t.RECORDSTARTTIME desc
+    </select>
+
+    <select id="queryAllCallBackRecord" resultType="com.hy.entity.record.RecordEntity">
+        select t.id                                                as keyStr,
+               t.UUID                                              as connectionId,
+               t.CALLNUMBER                                        as calledNumber,
+               to_char(t.RECORDSTARTTIME, 'yyyy.MM.dd')            as strCallDay,
+               to_char(t.RECORDSTARTTIME, 'yyyy.MM.dd hh24:mi:ss') as recordStartTime,
+               t.DURATION                                          as durTime,
+               t.COLUMN22                                          as recordPath,
+               t.CALLNUMBER                                        as accessCode,
+               t.COLUMN21                                          as callEndType,
+               to_char(t.RECORDSTARTTIME, 'yyyy.MM.dd hh24:mi:ss') as ansTime,
+               to_char(t.RECORDENDTIME, 'yyyy.MM.dd hh24:mi:ss')   as callEndTime
+        from T_BUSINESS_RECORDINFO t
+        where t.PROTYPE = '失效回访'
+          and t.ISCONNECT = 'connect'
+          and t.COLUMN23 = '1'
+          and t.COLUMN24 = '0'
+        order by t.RECORDSTARTTIME asc
+    </select>
+
+
+    <select id="queryAllCallBack" resultType="com.hy.entities.CallInfoStatistics">
+        select id,
+               uuid,
+               recordStartTime,
+               recordEndTime,
+               channelStartTime,
+               channelEndTime,
+               duration,
+               callNumber,
+               isConnect,
+               proType,
+               column1,
+               column2,
+               column3,
+               column4,
+               column5,
+               column6,
+               column7,
+               column8,
+               column9,
+               column10,
+               column11,
+               column12,
+               column13,
+               column14,
+               column15,
+               column16,
+               column17,
+               column18,
+               column19,
+               column20,
+               column21,
+               column22,
+               column23,
+               column24,
+               column25,
+               column26,
+               column27,
+               column28,
+               column29,
+               column30,
+               column31,
+               column32,
+               column33,
+               column34,
+               column35,
+               column36,
+               column37,
+               column38,
+               column39,
+               column40,
+               column41,
+               column42,
+               column43,
+               column44,
+               column45,
+               column46,
+               column47,
+               column48,
+               column49,
+               column50
+        from T_BUSINESS_RECORDINFO t
+        where t.PROTYPE = '失效回访'
+          and t.COLUMN23 = '0'
+        order by t.RECORDSTARTTIME asc
+    </select>
+
+    <select id="maxCountByRecordId" resultType="java.lang.Integer">
+        select case when count(1) > 1 then 1 else 0 end
+        from T_BUSINESS_RECORDINFO t
+        where t.COLUMN25 = #{recordId}
+          and t.ISCONNECT = 'connect'
+    </select>
+
+
+    <update id="updateBatchCallBackPaper" parameterType="java.util.List">
+        update T_BUSINESS_RECORDINFO
+        set COLUMN23 = '1'
+        where COLUMN5 in
+        <foreach collection="itemIds" item="employeeId"
+                 index="index" open="(" close=")" separator=",">
+            #{employeeId}
+        </foreach>
+        and PROTYPE = '失效回访'
+        and COLUMN23 = '0'
+    </update>
+
+
+    <update id="updateBatchCallBackRecord" parameterType="java.util.List">
+        update T_BUSINESS_RECORDINFO
+        set COLUMN24 = '1'
+        where id in
+        <foreach collection="itemIds" item="employeeId"
+                 index="index" open="(" close=")" separator=",">
+            #{employeeId}
+        </foreach>
+        and PROTYPE = '失效回访'
+        and COLUMN24 = '0'
+    </update>
+
+    <update id="updateInValidCallBackRecord" parameterType="string">
+        update T_BUSINESS_RECORDINFO
+        set COLUMN24 = '2'
+        where id = #{id}
+          and PROTYPE = '失效回访'
+          and COLUMN24 = '0'
+    </update>
+
+    <update id="invalidRecordList" parameterType="com.hy.entities.CallInfoStatistics">
+        update T_BUSINESS_RECORDINFO
+        set COLUMN23 = '2',
+            COLUMN24 = '2'
+        where id = #{id}
+          and PROTYPE = '失效回访'
+    </update>
+</mapper>

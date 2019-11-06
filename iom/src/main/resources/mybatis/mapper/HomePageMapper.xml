@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.iom.mapper.oracle.HomePageMapper">
+    <select id="querySummaryData" resultType="com.hy.iom.homepage.page.HomePage">
+        select callCount,
+        answerCount,
+        gainException,
+        callException,
+        decode(successCount, 0, '0', round((successCount / callCount) * 100, 2)) as successRate
+        from (
+        select count(*) as callCount,
+        NVL(sum(case when ONSTATE = 'connect' then 1 else 0 end), 0) as answerCount,
+        NVL(sum(case when TRADESTATE != null then 1 else 0 end), 0) as successCount,
+        NVL(sum(case when ONSTATE = 'Exception' then 1 else 0 end), 0) as gainException
+        from(
+        select * from T_IOM_RECORDINFO_TMP
+        where 1 = 1
+        and RECORDSTARTTIME <![CDATA[>=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and RECORDSTARTTIME <![CDATA[<=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd
+        hh24:mi:ss')and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+        union
+
+        select * from T_IOM_RECORDINFO
+        where 1 = 1
+        and RECORDSTARTTIME <![CDATA[>=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and RECORDSTARTTIME <![CDATA[<=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd
+        hh24:mi:ss')and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )
+        )
+        left join (select count(*) as callException
+        from(
+        SELECT id FROM T_IOM_RESINFO_TMP
+        where 1 = 1
+        and CREATETIME <![CDATA[>=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and CREATETIME <![CDATA[<=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and (to_char(VALUE) = 'SDK0100011' or to_char(VALUE) = 'SDK0000009' or to_char(VALUE) = 'error001')
+
+        UNION
+
+        SELECT id FROM T_IOM_RESINFO
+        where 1 = 1
+        and CREATETIME <![CDATA[>=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and CREATETIME <![CDATA[<=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and (to_char(VALUE) = 'SDK0100011' or to_char(VALUE) = 'SDK0000009' or to_char(VALUE) = 'error001')
+        )
+        )on 1 = 1
+    </select>
+
+
+    <select id="queryAveDuration" resultType="com.hy.iom.homepage.page.BarItem">
+        select onDate, sum(actualValue) as actualValue, sum(ADVANCEDWARNING) as advancedValue, sum(MIDDLEWARNING) as
+        middleValue ,
+        sum(LOWWARNING) as lowValue from (
+        select onDate,
+        decode(answerCount, 0, 0, round(sunDuration / answerCount, 2)) as ACTUALVALUE,
+        ADVANCEDWARNING,
+        MIDDLEWARNING,
+        LOWWARNING
+        from (
+        select onDate,sunDuration,answerCount from
+        (select to_char(RECORDSTARTTIME, 'mm-dd') as onDate,
+        sum(DURATION) as sunDuration,
+        NVL(sum(case when ONSTATE = 'connect' then 1 else 0 end), 0) as answerCount
+        from T_IOM_RECORDINFO_TMP
+        where 1 = 1
+        and RECORDSTARTTIME <![CDATA[>=]]> to_date(to_char(sysdate - 6, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and RECORDSTARTTIME <![CDATA[<=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        group by to_char(RECORDSTARTTIME, 'mm-dd')
+
+        union
+
+        select to_char(RECORDSTARTTIME, 'mm-dd') as onDate,
+        sum(DURATION) as sunDuration,
+        NVL(sum(case when ONSTATE = 'connect' then 1 else 0 end), 0) as answerCount
+        from T_IOM_RECORDINFO
+        where 1 = 1
+        and RECORDSTARTTIME <![CDATA[>=]]> to_date(to_char(sysdate - 6, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and RECORDSTARTTIME <![CDATA[<=]]> to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd
+        hh24:mi:ss')
+        and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        group by to_char(RECORDSTARTTIME, 'mm-dd')
+        )order by onDate desc
+        )
+        left join (select *
+        from (
+        (select ADVANCEDWARNING,
+        MIDDLEWARNING,
+        LOWWARNING
+        from T_IOM_QUALITY
+        where QUATYPE = 'AverageTime'
+        <if test="data!=null and data!=''">
+            and DIMENSIONNAME=#{data}
+        </if>
+        <if test="barData!=null and barData!=''">
+            and DIMENSIONNAME=#{barData}
+        </if>
+        and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )
+        UNION ALL
+        (
+        select 0, 0, 0
+        from dual))
+        where rownum = 1) on 1 = 1
+        union ALL
+        (select to_char(sysdate - 6, 'mm-dd') as onDate,
+        0 as actualValue,
+        0 as ADVANCEDWARNING,
+        0 as MIDDLEWARNING,
+        0 as MIDDLEWARNING
+        from dual
+        union All
+        select to_char(sysdate - 5, 'mm-dd') as onDate,
+        0 as actualValue,
+        0 as ADVANCEDWARNING,
+        0 as MIDDLEWARNING,
+        0 as MIDDLEWARNING
+        from dual
+        union All
+        select to_char(sysdate - 4, 'mm-dd') as onDate,
+        0 as actualValue,
+        0 as ADVANCEDWARNING,
+        0 as MIDDLEWARNING,
+        0 as MIDDLEWARNING
+        from dual
+        union All
+        select to_char(sysdate - 3, 'mm-dd') as onDate,
+        0 as actualValue,
+        0 as ADVANCEDWARNING,
+        0 as MIDDLEWARNING,
+        0 as MIDDLEWARNING
+        from dual
+        union All
+        select to_char(sysdate - 2, 'mm-dd') as onDate,
+        0 as actualValue,
+        0 as ADVANCEDWARNING,
+        0 as MIDDLEWARNING,
+        0 as MIDDLEWARNING
+        from dual
+        union All
+        select to_char(sysdate - 1, 'mm-dd') as onDate,
+        0 as actualValue,
+        0 as ADVANCEDWARNING,
+        0 as MIDDLEWARNING,
+        0 as MIDDLEWARNING
+        from dual
+        union All
+        select to_char(sysdate, 'mm-dd') as onDate,
+        0 as actualValue,
+        0 as ADVANCEDWARNING,
+        0 as MIDDLEWARNING,
+        0 as MIDDLEWARNING
+        from dual)) group by onDate order by onDate
+    </select>
+
+    <select id="queryConnect" resultType="com.hy.iom.homepage.page.HomePage">
+        select *
+        from (
+        select *
+        from (
+        select onDate,
+        decode(answerCount, 0, '0.00', round((answerCount / allCount) * 100, 2)) as actualValue
+        from (
+        select to_char(sysdate, 'yyyy-mm-dd') as onDate,
+        count(*) as allCount,
+        NVL(sum(case when ONSTATE = 'connect' then 1 else 0 end), 0) as answerCount
+        from(
+        select * from T_IOM_RECORDINFO_TMP
+        where 1 = 1
+        and RECORDSTARTTIME <![CDATA[>=]]>
+        to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd hh24:mi:ss')
+        and RECORDSTARTTIME <![CDATA[<=]]>
+        to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd hh24:mi:ss')
+        and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+        union
+
+        select * from T_IOM_RECORDINFO
+        where 1 = 1
+        and RECORDSTARTTIME <![CDATA[>=]]>
+        to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 00:00:00', 'yyyy-mm-dd hh24:mi:ss')
+        and RECORDSTARTTIME <![CDATA[<=]]>
+        to_date(to_char(sysdate, 'yyyy-mm-dd') || ' 23:59:59', 'yyyy-mm-dd hh24:mi:ss')
+        and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )group by to_char(sysdate, 'yyyy-mm-dd')
+        )
+        union all
+        (select to_char(sysdate, 'yyyy-mm-dd') as onDate, '100' as actualValue from dual))
+        where rownum = 1)
+        left join (select *
+        from (
+        (select ADVANCEDWARNING as advancedValue,
+        MIDDLEWARNING as middleValue,
+        LOWWARNING as lowValue
+        from T_IOM_QUALITY
+        where QUATYPE = 'ConnectionRate'
+        <if test="data!=null and data!=''">
+            and DIMENSIONNAME=#{data}
+        </if>
+        <if test="gaugeData!=null and gaugeData!=''">
+            and DIMENSIONNAME=#{gaugeData}
+        </if>
+        and PROJECTID in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )
+        UNION ALL
+        (
+        select 0, 0, 0
+        from dual))
+        where rownum = 1) on 1 = 1
+    </select>
+
+</mapper>

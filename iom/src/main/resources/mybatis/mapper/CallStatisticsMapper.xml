@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.iom.mapper.oracle.CallStatisticsMapper">
+
+    <update id="updateCntByPrimaryKey">
+        UPDATE T_IOM_CALLSTATISTICS
+        SET cnt=cnt + #{cnt}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectConnectedAndNotCntByDay" resultType="com.hy.iom.entities.CallStatistics">
+        select hour as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and day=#{day}
+        </if>
+        group by hour,onstate
+        order by hour
+    </select>
+
+    <select id="selectConnectedAndNotCntByWeek" resultType="com.hy.iom.entities.CallStatistics">
+        select day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and week=#{day}
+        </if>
+        group by day,onstate
+        order by day
+    </select>
+
+    <select id="selectConnectedAndNotCntByMonth" resultType="com.hy.iom.entities.CallStatistics">
+        select day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and month=#{day}
+        </if>
+        group by day,onstate
+        order by day
+    </select>
+
+    <select id="selectConnectedAndNotCntByYear" resultType="com.hy.iom.entities.CallStatistics">
+        select month as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and year=#{day}
+        </if>
+        group by month,onstate
+        order by month
+    </select>
+
+    <select id="selectOnceConnectedAndNotByMonth" resultType="com.hy.iom.entities.CallStatistics">
+        select day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and month=#{day}
+        </if>
+        and callcount=1
+        group by day,onstate
+        order by day
+    </select>
+
+    <select id="selectMultiConnectedAndNotByMonth" resultType="com.hy.iom.entities.CallStatistics">
+        select day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and month=#{day}
+        </if>
+        and callcount>1
+        group by day,onstate
+        order by day
+    </select>
+
+    <select id="selectOnceConnectedAndNotByYear" resultType="com.hy.iom.entities.CallStatistics">
+        select month as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and year=#{day}
+        </if>
+        and callcount=1
+        group by month,onstate
+        order by month
+    </select>
+
+    <select id="selectMultiConnectedAndNotByYear" resultType="com.hy.iom.entities.CallStatistics">
+        select month as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        <if test="day!=null">
+            and year=#{day}
+        </if>
+        and callcount>1
+        group by month,onstate
+        order by month
+    </select>
+
+    <select id="selectAllCallCnt" resultType="com.hy.iom.entities.CallStatistics">
+        select day,sum(cnt) as cnt
+        from t_iom_callstatistics
+        where projectId=#{projectId} and year =#{year}
+        group by day
+        order by day
+    </select>
+
+    <select id="selectCallCntByState" resultType="com.hy.iom.entities.CallStatistics">
+        select day,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="year!=null">
+            and year=#{year}
+        </if>
+        and onstate=#{onState}
+        group by day
+        order by day
+    </select>
+
+    <select id="selectCallCnt" resultType="com.hy.iom.entities.CallCntResult">
+        select #{projectId} as projectId,a.day as callDate,a.cnt as dialCount
+        ,b.cnt as connectCount,c.cnt as unconnectCount
+        ,round(b.cnt/a.cnt,2) as successRate,round(c.cnt/a.cnt,2) as failRate
+        from (
+        select day,sum(cnt) as cnt
+        from t_iom_callstatistics
+        where projectId=#{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and day between #{month} and #{day}
+        group by day
+        )a left join (
+        select day,sum(cnt) as cnt
+        from t_iom_callstatistics
+        where projectId=#{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and day between #{month} and #{day} and onstate='connect'
+        group by day
+        )b on a.day=b.day
+        left join (
+        select day,sum(cnt) as cnt
+        from t_iom_callstatistics
+        where projectId=#{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and day between #{month} and #{day} and onstate='unconnect'
+        group by day
+        )c on a.day=c.day
+        order by callDate desc
+    </select>
+
+    <select id="selectSpeechOverTimeStatistics" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select sum(v) as value from(
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT_TMP c
+        join T_IOM_RECORDINFO_TMP r on c.UUID = r.UUID
+        where c.type = 'speechOverTime'
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+
+        union
+
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT c
+        join T_IOM_RECORDINFO r on c.UUID = r.UUID
+        where c.type = 'speechOverTime'
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+        )
+    </select>
+
+    <select id="selectMatchErrorStatistics" resultType="com.hy.iom.entities.CallErrorStatistics">
+        selcet sum(v) as value from(
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT_TMP c
+        join T_IOM_RECORDINFO_TMP r on c.UUID = r.UUID
+        where c.type = 'matchError'
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+
+        union
+
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT c
+        join T_IOM_RECORDINFO r on c.UUID = r.UUID
+        where c.type = 'matchError'
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+        )
+    </select>
+
+    <select id="selectErrorStatistics" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select sum(v) as value from(
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT_TMP c
+        join T_IOM_RECORDINFO_TMP r on c.UUID = r.UUID
+        where c.type = 'error'
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+
+        union
+
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT c
+        join T_IOM_RECORDINFO r on c.UUID = r.UUID
+        where c.type = 'error'
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+        )
+    </select>
+
+    <select id="selectAllStatistics" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select sum(v) as value from(
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT_TMP c
+        join T_IOM_RECORDINFO_TMP r on c.UUID = r.UUID
+        where 1=1
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+
+        union
+
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT c
+        join T_IOM_RECORDINFO r on c.UUID = r.UUID
+        where 1=1
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+        )
+    </select>
+
+    <select id="selectConnectErrorStatistics" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select sum(v) as value from(
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT_TMP c
+        join T_IOM_RECORDINFO_TMP r on c.UUID = r.UUID
+        where (c.TYPE = 'speechOverTime' or c.TYPE = 'matchError' or c.TYPE = 'error')
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+
+        union
+
+        select count(distinct c.UUID) as v from T_IOM_CALLCONTENT c
+        join T_IOM_RECORDINFO r on c.UUID = r.UUID
+        where (c.TYPE = 'speechOverTime' or c.TYPE = 'matchError' or c.TYPE = 'error')
+        <if test="projectId!=null">
+            and r.projectId = #{projectId}
+        </if>
+        <if test="recordStartTime!=null">
+            and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        </if>
+        <if test="recordEndTime!=null">
+            and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        </if>
+        )
+    </select>
+
+
+    <select id="selectSpeechOverTimeLine" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO_TMP
+        where callState = 'speechOverTime'
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+
+        union all
+
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO
+        where callState = 'speechOverTime'
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+    <select id="selectMatchErrorLine" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO_TMP
+        where callState = 'matchError'
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+
+        union all
+
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO
+        where callState = 'matchError'
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+    <select id="selectDisconnectErrorLine" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO_TMP
+        where callState = 'error'
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+
+        union all
+
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO
+        where callState = 'error'
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+    <select id="selectAllLine" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO_TMP
+        where projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+
+        union all
+
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO
+        where projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+    <select id="selectErrorLine" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME, 'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO_TMP
+        where (CALLSTATE = 'speechOverTime' or CALLSTATE = 'matchError' or CALLSTATE = 'error' )
+            and recordStartTime <![CDATA[>=]]> #{recordStartTime}
+            and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+            and projectId = #{projectId}
+
+        union all
+
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO
+        where (CALLSTATE = 'speechOverTime' or CALLSTATE = 'matchError' or CALLSTATE = 'error' )
+            and recordStartTime <![CDATA[>=]]> #{recordStartTime}
+            and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+            and projectId = #{projectId}
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+    <select id="selectByErrorType" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME, 'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select r.RECORDSTARTTIME,c.UUID from T_IOM_CALLCONTENT_TMP c join T_IOM_RECORDINFO_TMP r on c.UUID = r.UUID
+        where (c.type = 'speechOverTime' or c.type = 'matchError' or c.type = 'error' )
+        and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        and r.projectId = #{projectId}
+
+        union all
+
+        select r.RECORDSTARTTIME,c.UUID from T_IOM_CALLCONTENT c join T_IOM_RECORDINFO r on c.UUID = r.UUID
+        where (c.type = 'speechOverTime' or c.type = 'matchError' or c.type = 'error' )
+        and r.recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        and r.recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        and r.projectId = #{projectId}
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+    <select id="selectConnectLine" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO_TMP
+        where callState = 'connectSuccess' and onState = 'connect'
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+
+        union all
+
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO
+        where callState = 'connectSuccess' and onState = 'connect'
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime}
+        and recordEndTime <![CDATA[<=]]> #{recordEndTime}
+        and projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+    <select id="selectunconnectLine" resultType="com.hy.iom.entities.CallErrorStatistics">
+        select TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd') as recordTime,count(distinct UUID) as value from
+        (
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO_TMP
+        where callState = 'connectSuccess' and onState = 'unconnect'
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime} and
+        projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+
+        union all
+
+        select RECORDSTARTTIME,UUID from T_IOM_RECORDINFO
+        where callState = 'connectSuccess' and onState = 'unconnect'
+        and recordStartTime <![CDATA[>=]]> #{recordStartTime} and recordEndTime <![CDATA[<=]]> #{recordEndTime} and
+        projectId = #{projectId}
+        <if test="ruleId!=null and ruleId!=''">
+            and ruleId=#{ruleId}
+        </if>
+        )group by TO_CHAR(RECORDSTARTTIME,'yyyy-MM-dd')
+    </select>
+
+
+    <select id="getConnectedAndNotCntByYear" resultType="com.hy.iom.entities.CallStatistics">
+        select year as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        and (
+        (to_date(day,'yyyy-MM-dd') <![CDATA[>=]]> #{startTime}
+        and to_date(day,'yyyy-MM-dd') <![CDATA[<=]]> #{endTime})
+        or (
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{startTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') = to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        )
+        )
+        group by year,onstate
+        order by year desc
+    </select>
+
+    <select id="getConnectedAndNotCntByMonth" resultType="com.hy.iom.entities.CallStatistics">
+        select month as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        and (
+        (to_date(day,'yyyy-MM-dd') <![CDATA[>=]]> #{startTime}
+        and to_date(day,'yyyy-MM-dd') <![CDATA[<=]]> #{endTime})
+        or (
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{startTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') = to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        )
+        )
+        group by month,onstate
+        order by month desc
+    </select>
+
+    <select id="getConnectedAndNotCntByWeek" resultType="com.hy.iom.entities.CallStatistics">
+        select week as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        and (
+        (to_date(day,'yyyy-MM-dd') <![CDATA[>=]]> #{startTime}
+        and to_date(day,'yyyy-MM-dd') <![CDATA[<=]]> #{endTime})
+        or (
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{startTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') = to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        )
+        )
+        group by week,onstate
+        order by week desc
+    </select>
+
+    <select id="getConnectedAndNotCntByDay" resultType="com.hy.iom.entities.CallStatistics">
+        select day as day,onstate,sum(cnt) as cnt from t_iom_callstatistics
+        where 1=1
+        <if test="projectId!=null">
+            and projectId=#{projectId}
+        </if>
+        <if test="ruleId!=null">
+            and ruleId=#{ruleId}
+        </if>
+        and (
+        (to_date(day,'yyyy-MM-dd') <![CDATA[>=]]> #{startTime}
+        and to_date(day,'yyyy-MM-dd') <![CDATA[<=]]> #{endTime})
+        or (
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{startTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') != to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        or
+        (to_char(#{startTime},'yyyy-MM-dd') = to_char(#{endTime},'yyyy-MM-dd')
+        and to_char(#{endTime},'yyyy-MM-dd') = day
+        and to_char(#{startTime},'hh24') <![CDATA[<=]]> hour
+        and to_char(#{endTime},'hh24') <![CDATA[>=]]> hour)
+        )
+        )
+        group by day,onstate
+        order by day desc
+    </select>
+
+</mapper>

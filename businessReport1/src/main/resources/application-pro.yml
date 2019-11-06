@@ -1,0 +1,7 @@
+context:
+    listener:
+        classes: com.hy.cpic.config.LocationsSettingConfigFileApplicationListener
+
+spring:
+    config:
+        location: /Users/lxg/Downloads/config/

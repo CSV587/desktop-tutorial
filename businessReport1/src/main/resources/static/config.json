@@ -1,0 +1,10 @@
+{
+  "baseName": "",
+  "deployModel": "propxy",
+  "config": [
+    {
+      "name": "业务运营平台",
+      "urlHost": "http://127.0.0.1:8090/cpic"
+    }
+  ]
+}

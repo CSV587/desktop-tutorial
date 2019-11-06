@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.ReturnVisitDataMapper">
+
+    <select id="query"
+            resultType="com.hy.cpic.reporting.extractData.returnVisit.page.ReturnVisitDataPage">
+        select to_char(r.CALLDATE,'yyyy-MM-dd') as callDate,
+        r.CENTER as center,
+        <if test="dimension!=null and dimension!='' and 'company'==dimension">
+            r.COMPANY as company,
+        </if>
+        sum(case when r.isconnected ='connect' then 1
+        when r.isconnected='unconnect' then 1 else 0 end) +
+        sum(case when r.isconnected='noCall' then 1 ELSE 0 END ) as taskNum,
+        sum(case when r.isconnected ='connect' then 1
+        when r.isconnected='unconnect' then 1 else 0 end) as returnNum,
+        sum(case when r.isconnected='noCall' then 1 ELSE 0 END ) as unReturnNum,
+        sum(case when r.ISBLACKLIST ='y' then 1 else 0 end) as blackListNum,
+        sum(case when r.ISWHITELIST ='y' then 1 else 0 end) as whiteListNum,
+        sum(case when r.ISREPEAT ='y' then 1 else 0 end) as repeatNum,
+        sum(case when r.isconnected ='connect' then 1 else 0 end) as connectedNum,
+        sum(r.RECORDINGDURATION) as recordingDuration,
+        sum(case when r.isconnected ='unconnect' then 1 else 0 end) as unconnectedNum,
+        sum(case when r.RESULTLEVELTWO ='1' then 1 else 0 end ) as conversionNum,
+        sum(case when r.RESULTLEVELTWO='1' then 1 when r.RESULTLEVELTWO='0' then 1
+        when r.RESULTLEVELTWO='4' then 1 else 0 end ) as answerOneNum,
+        sum(case when r.isconnected='connect' then 1 else 0 end ) -sum(case when r.isconnected='connect' and
+        r.FINALNODENAME = '非本人' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '核身' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '结束语6' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '结束语7' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '是否收到保单' then 1
+        when r.isconnected='connect' and r.FINALNODENAME is null then 1 else 0 end ) as answerTwoNum,
+        sum(case when r.isconnected='connect' then 1 else 0 end ) - sum(case when r.isconnected='connect' and
+        r.FINALNODENAME = '非本人' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '核身' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '结束语6' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '结束语7' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '是否收到保单' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '解释原因' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '是否满意' then 1
+        when r.isconnected='connect' and r.FINALNODENAME is null then 1 else 0 end ) as answerThreeNum,
+        sum(case when r.ISCONNECTED='connect' then 1 else 0 end ) - sum(case when r.ISCONNECTED='connect' and
+        r.FINALNODENAME = '非本人' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '核身' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '结束语6' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '结束语7' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '是否收到保单' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '解释原因' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '是否满意' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '不满意原因咨询' then 1
+        when r.isconnected='connect' and r.FINALNODENAME = '推荐打分' then 1
+        when r.isconnected='connect' and r.FINALNODENAME is null then 1 else 0 end ) as answerFourNum,
+        sum(case when r.isconnected='connect' then 1 else 0 end ) - sum(case when r.isconnected='connect' and
+        r.FINALNODENAME = '非本人' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '核身' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '结束语6' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '结束语7' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '是否收到保单' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '解释原因' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '是否满意' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '不满意原因咨询' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '推荐打分' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '推荐理由' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '进一步改善' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME = '中等评价' then 1
+        when r.ISCONNECTED='connect' and r.FINALNODENAME is null then 1 else 0 end ) as answerFiveNum,
+        sum(case when r.ENDNODENAME = '多次未识别-结束语5' then 1
+        when r.ENDNODENAME = '结束语1' then 1
+        when r.ENDNODENAME = '结束语2' then 1
+        when r.ENDNODENAME = '结束语3' then 1
+        when r.ENDNODENAME = '结束语4' then 1
+        when r.ENDNODENAME = '结束语8' then 1 else 0 end ) as overNum,
+        sum(case when r.ENDNODENAME = '结束语6' then 1 else 0 end ) as virtualNumberNum,
+        sum(case when r.ENDNODENAME = '结束语4' then 1
+        when r.ENDNODENAME = '结束语3' then 1
+        when r.ENDNODENAME = '多次未识别-结束语5' then 1 else 0 end ) as onlineNumber
+        from t_cpic_returnVisitData r
+        where
+        r.CALLDATE <![CDATA[>=]]> #{startTime}
+        and r.CALLDATE <![CDATA[<]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and r.COMPANY = #{company}
+        </if>
+        <if test="center!=null and center!=''">
+            and r.CENTER = #{center}
+        </if>
+        group by r.center, to_char(r.CALLDATE,'yyyy-MM-dd')
+        <if test="dimension!=null and dimension!='' and 'company'==dimension">
+            ,r.company
+        </if>
+        order by to_char(r.CALLDATE,'yyyy-MM-dd') desc
+    </select>
+
+    <select id="isCalledInOneMonth" resultType="Integer">
+        select count(*)
+        from T_CPIC_RETURNVISITDATA t
+        where t.CALLDATE
+        between to_date(to_char(sysdate-30,'yyyy-mm-dd'), 'yyyy-mm-dd') and sysdate
+        and t.CALLNUMBER = #{callNumber}
+        and t.ISCONNECTED != 'noCall'
+    </select>
+
+    <insert id="save" parameterType="com.hy.cpic.entities.ReturnVisitData">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into
+        T_CPIC_RETURNVISITDATA(
+        id,center,company,isBlackList,isWhiteList,fst,callNumber,carNumber,agentId,isRepeat,isReturn,isConnected,isTransfer,endNodeName,finalNodeName,resultLevelOne,resultLevelTwo,callDate,taskGenerateDate,listId)
+        values(#{id},#{center},#{company},#{isBlackList},#{isWhiteList},#{fst},#{callNumber},#{carNumber},#{agentId},#{isRepeat},#{isReturn},#{isConnected},#{isTransfer},#{endNodeName},#{finalNodeName},#{resultLevelOne},#{resultLevelTwo},#{callDate},#{taskGenerateDate},#{listId})
+    </insert>
+    
+    <select id="queryUnrealNumber" resultType="com.hy.cpic.entities.ReturnVisitData">
+        select t.COMPANY as company, t.CALLNUMBER as callNumber, t.CARNUMBER as carNumber
+        from T_CPIC_RETURNVISITDATA t
+        where t.ENDNODENAME = '结束语6'
+        and t.FST <![CDATA[>=]]> #{startTime}
+        and t.FST <![CDATA[<=]]> #{endTime}
+    </select>
+
+</mapper>

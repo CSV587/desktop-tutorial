@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.CallInfoStatisticsMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.CallInfoStatistics">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select replace(sys_guid(), '-', '') as id from DUAL
+        </selectKey>
+        insert into T_CPIC_RECORDINFO(ID,UUID,
+        RECORDSTARTTIME,RECORDENDTIME,CHANNELSTARTTIME,CHANNELENDTIME,CALLNUMBER,ISCONNECT,PROTYPE,
+        COLUMN1,COLUMN2,COLUMN3,COLUMN4,COLUMN5,COLUMN6,COLUMN7,COLUMN8,COLUMN9,COLUMN10,
+        COLUMN11,COLUMN12,COLUMN13,COLUMN14,COLUMN15,COLUMN16,COLUMN17,COLUMN18,COLUMN19,COLUMN20,
+        COLUMN21,COLUMN22,COLUMN23,COLUMN24,COLUMN25,COLUMN26,COLUMN27,COLUMN28,COLUMN29,COLUMN30,
+        COLUMN31,COLUMN32,COLUMN33,COLUMN34,COLUMN35,COLUMN36,COLUMN37,COLUMN38,COLUMN39,COLUMN40,
+        COLUMN41,COLUMN42,COLUMN43,COLUMN44,COLUMN45,COLUMN46,COLUMN47,COLUMN48,COLUMN49,COLUMN50)
+        values(#{id},#{uuid},#{recordStartTime},#{recordEndTime},#{channelStartTime},#{channelEndTime},
+        #{callNumber},#{isConnect},#{proType},
+        #{column1},#{column2},#{column3},#{column4},#{column5},#{column6},#{column7},#{column8},#{column9},#{column10},
+        #{column11},#{column12},#{column13},#{column14},#{column15},#{column16},#{column17},#{column18},#{column19},#{column20},
+        #{column21},#{column22},#{column23},#{column24},#{column25},#{column26},#{column27},#{column28},#{column29},#{column30},
+        #{column31},#{column32},#{column33},#{column34},#{column35},#{column36},#{column37},#{column38},#{column39},#{column40},
+        #{column41},#{column42},#{column43},#{column44},#{column45},#{column46},#{column47},#{column48},#{column49},#{column50})
+    </insert>
+
+    <select id="query" resultType="com.hy.cpic.reporting.calldetail.page.CallDetailPage">
+        select
+        /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        to_char(t.RECORDSTARTTIME, 'YYYY-MM-DD') as dateStr,
+        t.COLUMN1 as company,
+        t.COLUMN3 as area,
+        t.COLUMN4 as team,
+        t.COLUMN2 as center,
+        count(1) as dialTaskCount,
+        sum((case
+        when t.COLUMN12 = '0' then 1
+        else 0 END)) as dialSuccessCount,
+        sum((case
+        when t.COLUMN12 = '4' or t.COLUMN12 = '1' or t.COLUMN12 = '102' or t.COLUMN12 = '105' or
+        t.COLUMN12 = '2' or t.COLUMN12 = '5' then 1
+        else 0 END)) as dialFailureCount,
+        sum((case
+        when t.COLUMN12 = '3' or t.COLUMN12 = '103' then 1
+        else 0 end)) as dialExceptionCount
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '车险订单'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and t.COLUMN1 = #{company}
+        </if>
+        <if test="area!=null and area!=''">
+            and t.COLUMN3 = #{area}
+        </if>
+        <if test="team!=null and team!=''">
+            and t.COLUMN4 = #{team}
+        </if>
+        <if test="center!=null and center!=''">
+            and t.COLUMN2 = #{center}
+        </if>
+        group by to_char(t.RECORDSTARTTIME, 'YYYY-MM-DD'), t.COLUMN3, t.COLUMN1, t.COLUMN4, t.COLUMN2
+        order by to_char(t.RECORDSTARTTIME, 'YYYY-MM-DD') desc, company desc, area desc, team desc, center desc
+    </select>
+
+    <select id="queryTask" resultType="com.hy.cpic.reporting.tasklist.page.TaskListPage">
+        select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        to_char(t.RECORDSTARTTIME, 'YYYY-MM-DD') as dateStr,
+        t.COLUMN1 as company,
+        t.COLUMN3 as area,
+        t.COLUMN4 as team,
+        t.COLUMN2 as center,
+        t.column5 as agentId,
+        t.column6 as carNumber,
+        t.column7 as policyNo,
+        t.column8 as businessType,
+        t.column9 as productType,
+        t.UUID as recordID,
+        t.RECORDSTARTTIME as recordStartTime,
+        t.RECORDENDTIME as recordEndTime,
+        t.COLUMN13 as duration,
+        t.COLUMN10 as callCount,
+        t.COLUMN11 as callResult1,
+        t.COLUMN12 as callResult2
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '车险订单'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and t.COLUMN1 = #{company}
+        </if>
+        <if test="area!=null and area!=''">
+            and t.COLUMN3 = #{area}
+        </if>
+        <if test="team!=null and team!=''">
+            and t.COLUMN4 = #{team}
+        </if>
+        <if test="center!=null and center!=''">
+            and t.COLUMN2 = #{center}
+        </if>
+        <if test="carNumber!=null and carNumber!=''">
+            and t.COLUMN6 = #{carNumber}
+        </if>
+        order by t.RECORDSTARTTIME desc, company desc, area desc, team desc, center desc
+    </select>
+
+    <select id="queryMonitor" resultType="com.hy.cpic.reporting.ccmonitor.page.CCMonitorPage">
+        select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        to_char(t.RECORDSTARTTIME, 'YYYY-MM-DD') as dateStr,
+        t.COLUMN1 as company,
+        t.COLUMN3 as area,
+        t.COLUMN4 as team,
+        t.COLUMN2 as center,
+        to_char(t.RECORDSTARTTIME, 'HH24') as timeSlot,
+        count(1) as requestCount,
+        sum((case
+        when t.ISCONNECT != 'unconnect' then 1
+        else 0 END)) as realDialCount,
+        sum((case
+        when t.ISCONNECT = 'unconnect' then 1
+        else 0 END)) as exceedingCount
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '车险订单'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and t.COLUMN1 = #{company}
+        </if>
+        <if test="area!=null and area!=''">
+            and t.COLUMN3 = #{area}
+        </if>
+        <if test="team!=null and team!=''">
+            and t.COLUMN4 = #{team}
+        </if>
+        <if test="center!=null and center!=''">
+            and t.COLUMN2 = #{center}
+        </if>
+        group by to_char(RECORDSTARTTIME, 'YYYY-MM-DD'), t.COLUMN3, t.COLUMN1, t.COLUMN4, t.COLUMN2,
+        to_char(RECORDSTARTTIME, 'HH24')
+        order by to_char(RECORDSTARTTIME, 'YYYY-MM-DD') desc,to_char(RECORDSTARTTIME, 'HH24') desc, company desc, area
+        desc, team desc, center desc
+
+    </select>
+
+    <select id="queryCallBackRate" resultType="com.hy.cpic.reporting.callbackrate.page.CallBackRatePage">
+        with CTE as (select ISCONNECT, COLUMN7, COLUMN11
+                     from (select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+                               t.*,
+                               row_number() over (partition by t.COLUMN7
+                                   order by t.RECORDSTARTTIME desc) row_number
+                           from T_CPIC_RECORDINFO t
+                           where t.PROTYPE = '车险回访'
+                             and t.RECORDSTARTTIME is not null
+                             and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+                             and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime})
+                     where row_number = 1
+                     order by RECORDSTARTTIME asc)
+        select callBackTaskSuccessNum,
+               callBackTaskFailNum,
+               transFerNum,
+               callBackTaskSuccessNum + callBackTaskFailNum as callBackTaskNum
+        from (select sum(case
+                             when t.ISCONNECT = 'connect' then 1
+                             else 0 END)   as callBackTaskSuccessNum,
+                     sum(case
+                             when t.ISCONNECT = 'unconnect' then 1
+                             else 0 END)   as callBackTaskFailNum,
+                     sum((case
+                              when t.COLUMN11 = '1' then 1
+                              else 0 END)) as transFerNum
+              from CTE t) p
+    </select>
+
+
+    <select id="queryCallBackList" resultType="com.hy.cpic.reporting.callbacklist.page.CallBackListPage">
+        select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        t.COLUMN15 as dateStr,
+        to_char(t.RECORDENDTIME, 'YYYY-MM-DD HH24:mi:ss') as recordStartTime,
+        t.COLUMN1 as company,
+        t.column2 as center,
+        t.COLUMN3 as area,
+        t.column4 as team,
+        t.column5 as agentId,
+        t.column6 as agentName,
+        t.column7 as carNumber,
+        t.column8 as businessType,
+        t.column9 as callBackType,
+        t.COLUMN10 as callResult1,
+        t.COLUMN11 as callResult2,
+        t.COLUMN12 as duration,
+        t.column14 as validDateStr,
+        t.COLUMN17 as answer1,
+        t.COLUMN18 as answer2,
+        t.COLUMN19 as answer3,
+        t.COLUMN20 as answer4,
+        t.COLUMN21 as answer5,
+        t.COLUMN22 as answer3Cause,
+        t.COLUMN25 as channeltype,
+        t.UUID as uuid
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '车险回访'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and t.COLUMN1 = #{company}
+        </if>
+        <if test="area!=null and area!=''">
+            and t.COLUMN3 = #{area}
+        </if>
+        <if test="team!=null and team!=''">
+            and t.COLUMN4 = #{team}
+        </if>
+        <if test="center!=null and center!=''">
+            and t.COLUMN2 = #{center}
+        </if>
+        <if test="carNumber!=null and carNumber!=''">
+            and t.column7 = #{carNumber}
+        </if>
+        order by t.RECORDSTARTTIME desc
+    </select>
+
+    <select id="queryIntentionRate" resultType="com.hy.cpic.reporting.intentionrate.page.IntentionRatePage">
+        select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        p.company,
+        p.activityName,
+        p.callTotal,
+        p.successNum,
+        (case
+        when round((p.successNum / p.callTotal) * 100, 2) > 1 or round((p.successNum / p.callTotal) * 100, 2) = 0
+        then round((p.successNum / p.callTotal) * 100, 2) || '%'
+        else '0' || round((p.successNum / p.callTotal) * 100, 2) || '%' END) as successRate,
+        p.failNum,
+        (case
+        when round((p.failNum / p.callTotal) * 100, 2) > 1 or round((p.failNum / p.callTotal) * 100, 2) = 0
+        then round((p.failNum / p.callTotal) * 100, 2) || '%'
+        else '0' || round((p.failNum / p.callTotal) * 100, 2) || '%' END) as failRate
+        from (select t.COLUMN1 as company,
+        t.COLUMN2 as activityName,
+        count(*) as callTotal,
+        sum((case
+        when t.ISCONNECT = 'connect' then 1
+        else 0 END)) as successNum,
+        sum((case
+        when t.ISCONNECT != 'connect' then 1
+        else 0 END)) as failNum
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '投保意向'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and t.COLUMN1 = #{company}
+        </if>
+        group by t.COLUMN1, t.COLUMN2) p
+    </select>
+
+    <select id="queryIntentionList" resultType="com.hy.cpic.reporting.intentionlist.page.IntentionListPage">
+        select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        t.COLUMN1 as company,
+        t.COLUMN2 as activityName,
+        to_char(t.RECORDSTARTTIME, 'YYYY-MM-DD HH24:mi:ss') as recordStartTime,
+        to_char(t.RECORDENDTIME, 'YYYY-MM-DD HH24:mi:ss') as recordEndTime,
+        t.COLUMN8 as callDuration,
+        t.CALLNUMBER as cusNumber,
+        t.COLUMN3 as cusName,
+        t.COLUMN4 as carNumber,
+        t.COLUMN5 as intentionClass,
+        t.COLUMN6 as allFlow,
+        t.COLUMN7 as callResult,
+        t.COLUMN12 as interactions
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '投保意向'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and t.COLUMN1 = #{company}
+        </if>
+        <if test="taskName!=null and taskName!=''">
+            and t.COLUMN13 = #{taskName}
+        </if>
+        order by t.RECORDSTARTTIME desc
+    </select>
+
+
+    <select id="queryCallBackListMap" resultType="java.util.LinkedHashMap">
+        select *
+        from (
+                 select UUID                                              as 录音id,
+                        COLUMN5                                           as 坐席工号,
+                        to_char(RECORDSTARTTIME, 'YYYY-MM-DD HH24:mi:ss') as 应答时间,
+                        to_char(RECORDENDTIME, 'YYYY-MM-DD HH24:mi:ss')   as 挂机时间,
+                        COLUMN12                                          as 通话时长,
+                        COLUMN16                                          as 名单id,
+                        COLUMN10                                          as 呼叫一级结果,
+                        COLUMN11                                          as 呼叫二级结果
+                 from (
+                          select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+                              t.*,
+                              row_number()
+                                  over (partition by t.COLUMN7 order by t.RECORDSTARTTIME desc) row_number
+                          from T_CPIC_RECORDINFO t
+                          where t.PROTYPE = '车险回访'
+                            and t.RECORDSTARTTIME is not null
+                            and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+                            and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime})
+                 where row_number = 1
+                 order by RECORDSTARTTIME asc)
+        UNION ALL
+        (select ''      as 录音id,
+                AGENTID as 坐席工号,
+                ''      as 应答时间,
+                ''      as 挂机时间,
+                '0'     as 通话时长,
+                LISTID  as 名单id,
+                '1'     as 呼叫一级结果,
+                '5'     as 呼叫二级结果
+         from T_CPIC_RETURNVISITDATA
+         where ISCONNECTED = 'noCall'
+           and FST <![CDATA[>=]]> #{startTime}
+           and FST <![CDATA[<=]]> #{endTime})
+    </select>
+
+    <select id="queryIntentionListMap" resultType="java.util.LinkedHashMap">
+        select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        t.COLUMN10 as 营销活动ID,
+        t.COLUMN2  as 营销活动名称,
+        t.COLUMN11 as 名单ID,
+        t.COLUMN4  as 车牌号,
+        t.COLUMN5  as 意向等级,
+        t.COLUMN6  as 是否全流程,
+        t.COLUMN7  as 呼叫结果,
+        t.UUID     as 录音id,
+        t.CALLNUMBER as 手机号码
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '投保意向'
+        and t.ISCONNECT = 'connect'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<]]> #{endTime}
+        union all
+        select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        t.COLUMN10 as 营销活动ID,
+        t.COLUMN2  as 营销活动名称,
+        t.COLUMN11 as 名单ID,
+        t.COLUMN4  as 车牌号,
+        t.COLUMN5  as 意向等级,
+        t.COLUMN6  as 是否全流程,
+        t.COLUMN7  as 呼叫结果,
+        t.UUID     as 录音id,
+        t.COLUMN21 as 手机号码
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '投保意向'
+        and t.ISCONNECT = 'unconnect'
+        and t.column19='true'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<]]> #{endTime}
+    </select>
+
+    <select id="queryMarketRate" resultType="com.hy.cpic.reporting.marketrate.page.MarketRatePage">
+        select
+        t2.CALLNUMBER as callNumber,
+        t2.COLUMN1 as ruleName,
+        t1.callCount as callCount,
+        to_char(t1.lastCallTime, 'YYYY-MM-DD HH24:mi:ss') as lastCallTime,
+        case when t2.ISCONNECT = 'connect' then '是' else '否' END as connectState,
+        t2.COLUMN3 as contactState,
+        t2.COLUMN4 as activityDirection,
+        t2.COLUMN5 as phoneIntention,
+        t2.COLUMN6 as hangupNode,
+        t2.COLUMN7 as callResult,
+        t2.COLUMN8 as masterHangupNode,
+        t2.COLUMN9 as finishMatchError,
+        t2.COLUMN10 as site,
+        t2.COLUMN11 as belongTo
+        from (select /*+index(t RSTINDEX)*/ t.CALLNUMBER as callNumber,
+        t.COLUMN1 as ruleName,
+        count(*) as callCount,
+        max(t.RECORDSTARTTIME) as lastCallTime
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '寿险营销'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        and t.COLUMN15 in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="callNumber!=null and callNumber!=''">
+            and t.CALLNUMBER = #{callNumber}
+        </if>
+        <if test="ruleName!=null and ruleName!=''">
+            and t.COLUMN1 = #{ruleName}
+        </if>
+        group by t.CALLNUMBER, t.COLUMN1
+        order by lastCallTime desc) t1
+        left join
+        (
+        /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        select * from T_CPIC_RECORDINFO
+        where PROTYPE = '寿险营销'
+        and RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        and COLUMN15 in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="callNumber!=null and callNumber!=''">
+            and CALLNUMBER = #{callNumber}
+        </if>
+        <if test="ruleName!=null and ruleName!=''">
+            and COLUMN1 = #{ruleName}
+        </if>
+        ) t2
+        on t1.callNumber = t2.CALLNUMBER and t1.ruleName = t2.COLUMN1 and t1.lastCallTime = t2.RECORDSTARTTIME
+        order by t2.RECORDSTARTTIME desc
+    </select>
+
+    <select id="queryMarketRateCount" resultType="java.lang.Long">
+        select
+        count(1)
+        from (select /*+index(t RSTINDEX)*/ t.CALLNUMBER as callNumber,
+        t.COLUMN1 as ruleName,
+        max(t.RECORDSTARTTIME) as lastCallTime
+        from T_CPIC_RECORDINFO t
+        where t.PROTYPE = '寿险营销'
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        and t.COLUMN15 in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="callNumber!=null and callNumber!=''">
+            and t.CALLNUMBER = #{callNumber}
+        </if>
+        <if test="ruleName!=null and ruleName!=''">
+            and t.COLUMN1 = #{ruleName}
+        </if>
+        group by t.CALLNUMBER, t.COLUMN1
+        order by lastCallTime desc) t1
+        left join
+        (
+        /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        select CALLNUMBER,COLUMN1,RECORDSTARTTIME from T_CPIC_RECORDINFO
+        where PROTYPE = '寿险营销'
+        and RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        and COLUMN15 in
+        <foreach item="item" index="index" collection="projectList"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="callNumber!=null and callNumber!=''">
+            and CALLNUMBER = #{callNumber}
+        </if>
+        <if test="ruleName!=null and ruleName!=''">
+            and COLUMN1 = #{ruleName}
+        </if>
+        ) t2
+        on t1.callNumber = t2.CALLNUMBER and t1.ruleName = t2.COLUMN1 and t1.lastCallTime = t2.RECORDSTARTTIME
+    </select>
+
+
+    <select id="queryIntentionStatistics"
+            resultType="com.hy.cpic.reporting.intentionStatistics.page.IntentionStatisticsPage">
+        select t1.*,
+        round((t1.sumCon / t1.sumCount) * 100, 2) || '%' as conRate,
+        (t1.highLevelCount + t1.middleLevelCount + t1.lowLevelCount + t1.hangupCount) as validCount,
+        round(((t1.highLevelCount + t1.middleLevelCount + t1.lowLevelCount + t1.hangupCount) / t1.sumCount) * 100, 2) ||
+        '%' as validRate
+        from (
+        select t.COLUMN1 as company,
+        count(*) as sumCount,
+        sum(case when t.ISCONNECT = 'connect' then 1 else 0 end) as sumCon,
+        sum(case when t.ISCONNECT = 'unconnect' then 1 else 0 end) as sumUnCon,
+        sum(case when t.COLUMN5 = '高级' then 1 else 0 end) as highLevelCount,
+        sum(case when t.COLUMN5 = '中级' then 1 else 0 end) as middleLevelCount,
+        sum(case when t.COLUMN5 = '低级' then 1 else 0 end) as lowLevelCount,
+        sum(case when t.COLUMN5 = '黑名单' then 1 else 0 end) as blackCount,
+        sum(case when t.COLUMN7 = '可接通' then 1 else 0 end) as hangupCount
+        from (select
+        /*+index(T_CPIC_RECORDINFO RSTINDEX)*/ T_CPIC_RECORDINFO.*,
+        row_number() over (partition by COLUMN4,COLUMN14 order by RECORDSTARTTIME desc) rowNumer
+        from T_CPIC_RECORDINFO
+        where PROTYPE = '投保意向'
+        and COLUMN1 is not null
+        and RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and COLUMN1 = #{company}
+        </if>
+        <if test="taskName!=null and taskName!=''">
+            and COLUMN13 = #{taskName}
+        </if>
+        ) t
+        where t.rowNumer = 1
+        group by t.COLUMN1) t1
+    </select>
+
+
+    <update id="updateCallInfo" parameterType="com.hy.cpic.entities.CallInfoStatistics">
+        update T_CPIC_RETURNVISITDATA
+        <set>
+            UUID = #{uuid},
+            RECORDINGDURATION = #{column12},
+            CALLDATE = #{channelStartTime},
+            <if test="isConnect!=null and isConnect != 'InBlackList'">
+                ISCONNECTED = #{isConnect},
+            </if>
+            RESULTLEVELONE = #{column10},
+            RESULTLEVELTWO = #{column11},
+            ENDNODENAME = #{column23},
+            FINALNODENAME = #{column24},
+            <if test="isConnect!=null and isConnect == 'InBlackList'">
+                ISBLACKLIST = 'y',
+            </if>
+        </set>
+        where 1 = 1
+        <if test="column7!=null and column7!=''">
+            <bind name="pattern" value="'%' + column7"/>
+            and CARNUMBER like #{pattern}
+        </if>
+        and to_char(FST, 'yyyy-MM-dd') = to_char(#{channelStartTime}, 'yyyy-MM-dd')
+        and ISBLACKLIST != 'y'
+        and ISWHITELIST != 'y'
+        and ISREPEAT != 'y'
+    </update>
+
+
+    <select id="queryMarketList" resultType="com.hy.cpic.reporting.marketlist.page.MarketListPage">
+        select
+        /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        CALLNUMBER as callNumber,
+        RECORDSTARTTIME as startTime,
+        RECORDENDTIME as endTime,
+        COLUMN1 as ruleName,
+        COLUMN14 as taskName,
+        COLUMN12 as nodName,
+        trunc(COLUMN13) as hangupSec,
+        UUID as uuid,
+        COLUMN18 as callCount,
+        COLUMN7 as callResult
+        from T_CPIC_RECORDINFO t
+        where PROTYPE = '寿险营销'
+        and ISCONNECT = 'connect'
+        <if test="startTime!=null">
+            and RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        </if>
+        <if test="callNumber!=null and callNumber!=''">
+            and CALLNUMBER = #{callNumber}
+        </if>
+        <if test="projectId!=null and projectId!=''">
+            and COLUMN15 = #{projectId}
+        </if>
+        <if test="ruleId!=null and ruleId!=''">
+            and COLUMN16 = #{ruleId}
+        </if>
+        <if test="taskId!=null and taskId!=''">
+            and COLUMN17 = #{taskId}
+        </if>
+        <if test="nodName!=null and nodName!=''">
+            <bind name="pattern" value="'%' + nodName + '%'"/>
+            and COLUMN12 like #{pattern}
+        </if>
+        order by RECORDSTARTTIME desc
+    </select>
+
+    <select id="queryMarketListCount" resultType="java.lang.Long">
+        select
+        /*+index(T_CPIC_RECORDINFO RSTINDEX)*/
+        count(1)
+        from T_CPIC_RECORDINFO t
+        where PROTYPE = '寿险营销'
+        and ISCONNECT = 'connect'
+        <if test="startTime!=null">
+            and RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        </if>
+        <if test="endTime!=null">
+            and RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        </if>
+        <if test="callNumber!=null and callNumber!=''">
+            and CALLNUMBER = #{callNumber}
+        </if>
+        <if test="projectId!=null and projectId!=''">
+            and COLUMN15 = #{projectId}
+        </if>
+        <if test="ruleId!=null and ruleId!=''">
+            and COLUMN16 = #{ruleId}
+        </if>
+        <if test="taskId!=null and taskId!=''">
+            and COLUMN17 = #{taskId}
+        </if>
+        <if test="nodName!=null and nodName!=''">
+            <bind name="pattern" value="'%' + nodName + '%'"/>
+            and COLUMN12 like #{pattern}
+        </if>
+    </select>
+
+    <select id="queryCallCount" resultType="Integer">
+        select /*+index(T_CPIC_RECORDINFO PROTYPEINDEX)*/
+            count(*) as callCount
+        from T_CPIC_RECORDINFO t
+        where PROTYPE = '寿险营销'
+          and CALLNUMBER = #{callNumber}
+    </select>
+</mapper>

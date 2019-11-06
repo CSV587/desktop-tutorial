@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.iom.mapper.oracle.TagMapper">
+	
+	<!-- 查询标签  -->
+	<select id="getAllTags" resultType="com.hy.iom.tag.entity.Tag">
+        SELECT ID , NAME FROM T_IOM_TAG WHERE 1 = 1 AND NAME LIKE '%' || #{parameter} || '%'
+    </select>
+    
+    <!-- 添加标签  -->
+    <insert id="addTag">
+    	INSERT INTO T_IOM_TAG (ID,NAME) VALUES(#{id},#{name})
+    </insert>
+    
+    <!-- 删除标签  -->
+    <delete id="deleteTag" parameterType="String">
+    	DELETE FROM T_IOM_TAG WHERE ID = #{id}
+    </delete>
+    
+    <!-- 修改标签  -->
+    <update id="updateTag">
+    	UPDATE T_IOM_TAG SET NAME = #{name} WHERE ID = #{id}
+    </update>
+    
+    <!-- 查找标签名称  -->
+    <select id="getTagNameById" parameterType="String" resultType="String">
+    	SELECT NAME FROM T_IOM_TAG WHERE ID = #{id}
+    </select>
+    
+    <!-- 查找ID查询标签  -->
+    <select id="selectTagById" parameterType="String" resultType="com.hy.iom.tag.entity.Tag">
+    	SELECT ID , NAME FROM T_IOM_TAG WHERE 1 = 1 AND ID = #{id}
+    </select>
+    
+    <!-- 根据名称查找标签对象  -->
+    <select id="selectTagByName" parameterType="String" resultType="com.hy.iom.tag.entity.Tag">
+    	SELECT ID , NAME FROM T_IOM_TAG WHERE 1 = 1 AND NAME = #{name}
+    </select>
+    
+    <!-- 根据UUID查找标签结果  -->
+    <select id="SelectTagByUUID" parameterType="String" resultType="com.hy.iom.tag.entity.RecordInfoTag">
+    	SELECT ID , UUID , TAGID FROM T_IOM_RECORDINFOTAG WHERE 1 = 1 AND UUID = #{uuid}
+    </select>
+    
+    <!-- 根据UUID来修改标签id和标签结果 -->
+    <update id="updateTagByUUID">
+    	UPDATE T_IOM_RECORDINFOTAG SET TAGID = #{tagId} WHERE UUID = #{uuid}
+    </update>
+    
+    <!-- 根据UUID来添加标签  -->
+    <insert id="addTagByUUID">
+    	INSERT INTO T_IOM_RECORDINFOTAG(ID , UUID , TAGID) VALUES(#{id} , #{uuid} , #{tagId})
+    </insert>
+    
+    <!-- 根据id来模糊查询所有正在使用的标签 -->
+    <select id="getAllRecordInfoTags" parameterType="String" resultType="java.util.LinkedHashMap">
+    	SELECT T.ID , T.UUID , T.TAGID FROM T_IOM_RECORDINFOTAG T WHERE 1 = 1 AND T.TAGID LIKE '%' || #{id} || '%'
+    </select>
+</mapper>

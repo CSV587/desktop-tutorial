@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.CallNumConfigMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.CallNumConfig">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into T_CPIC_CALLNUMCONFIG(ID,NAME,CALLMAXNUM,repeatNum,execIp,PATH,REGEXP,
+        BUSINESSTYPE,RULEID,PROJECTID,FST,LMT,FOID,LOID,VALIDSTATE)
+        values(#{id},#{name},#{callMaxNum},#{repeatNum},#{execIp},#{path},#{regexp},#{businessType},
+        #{ruleId},#{projectId},#{fst},#{lmt},#{foid},#{loid},#{validState})
+    </insert>
+
+    <update id="edit" parameterType="com.hy.cpic.entities.CallNumConfig">
+        update T_CPIC_CALLNUMCONFIG
+        <trim prefix="set" suffixOverrides=",">
+            <if test="id!=null">ID=#{id},</if>
+            <if test="name!=null">NAME=#{name},</if>
+            <if test="path!=null">PATH=#{path},</if>
+            <if test="callMaxNum!=null">CALLMAXNUM=#{callMaxNum},</if>
+            <if test="repeatNum!=null">REPEATNUM=#{repeatNum},</if>
+            <if test="regexp!=null">REGEXP=#{regexp},</if>
+            <if test="businessType!=null">BUSINESSTYPE=#{businessType},</if>
+            <if test="ruleId!=null">RULEID=#{ruleId},</if>
+            <if test="projectId!=null">PROJECTID=#{projectId},</if>
+            <if test="execIp!=null">EXECIP=#{execIp},</if>
+            <if test="fst!=null">FST=#{fst},</if>
+            <if test="lmt!=null">LMT=#{lmt},</if>
+            <if test="foid!=null">FOID=#{foid},</if>
+            <if test="loid!=null">LOID=#{loid},</if>
+            <if test="validState!=null">VALIDSTATE=#{validState},</if>
+        </trim>
+        where id=#{id}
+    </update>
+
+    <select id="queryCallNumConfig"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.CallNumConfigPage">
+        select t.ID as id,t.NAME as name,
+        t.CALLMAXNUM as callMaxNum,t.PATH as path,t.REGEXP as regexp,t.BUSINESSTYPE as businessType, t.TOTALNUM as
+        totalNum,t.REPEATNUM as repeatNum, t.RULEID as ruleId,t.PROJECTID as projectId,t.EXECIP as execIp,t.FST as fst,
+        t.LMT as lmt,t.FOID as foid,t.LOID as loid
+        from T_CPIC_CALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="projectId!=null and projectId!=''">
+            and t.PROJECTID = #{projectId}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="queryValidCallNumConfig" parameterType="string"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.CallNumConfigPage">
+        select t.ID           as id,
+               t.NAME         as name,
+               t.CALLMAXNUM   as callMaxNum,
+               t.PATH         as path,
+               t.REGEXP       as regexp,
+               t.BUSINESSTYPE as businessType,
+               t.RULEID       as ruleId,
+               t.PROJECTID    as projectId,
+               t.FST          as fst,
+               t.LMT          as lmt,
+               t.FOID         as foid,
+               t.LOID         as loid,
+               t.REPEATNUM    as repeatNum,
+               t.EXECIP       as execIp
+        from T_CPIC_CALLNUMCONFIG t
+        where t.VALIDSTATE = 'valid'
+          and t.NAME = #{name}
+          and ROWNUM = 1
+    </select>
+
+    <select id="queryValidCallNumConfigLock" parameterType="string"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.CallNumConfigPage">
+        select t.ID           as id,
+               t.NAME         as name,
+               t.CALLMAXNUM   as callMaxNum,
+               t.PATH         as path,
+               t.REGEXP       as regexp,
+               t.BUSINESSTYPE as businessType,
+               t.RULEID       as ruleId,
+               t.PROJECTID    as projectId,
+               t.FST          as fst,
+               t.LMT          as lmt,
+               t.FOID         as foid,
+               t.LOID         as loid,
+               t.BUSINESSTYPE as businessType,
+               t.EXECIP       as execIp,
+               t.TASKTIME     as taskTime
+        from T_CPIC_CALLNUMCONFIG t
+        where t.VALIDSTATE = 'valid'
+          and t.NAME = #{name}
+          and ROWNUM = 1 for update
+    </select>
+
+    <update id="deleteConfig" parameterType="com.hy.cpic.entities.CallNumConfig">
+        update T_CPIC_CALLNUMCONFIG
+        <trim prefix="set" suffixOverrides=",">
+            <if test="id!=null">ID=#{id},</if>
+            <if test="name!=null">NAME=#{name},</if>
+            <if test="callMaxNum!=null">CALLMAXNUM=#{callMaxNum},</if>
+            <if test="repeatNum!=null">REPEATNUM=#{repeatNum},</if>
+            <if test="regexp!=null">REGEXP=#{regexp},</if>
+            <if test="businessType!=null">BUSINESSTYPE=#{businessType},</if>
+            <if test="ruleId!=null">RULEID=#{ruleId},</if>
+            <if test="projectId!=null">PROJECTID=#{projectId},</if>
+            <if test="execIp!=null">EXECIP=#{execIp},</if>
+            <if test="fst!=null">FST=#{fst},</if>
+            <if test="lmt!=null">LMT=#{lmt},</if>
+            <if test="foid!=null">FOID=#{foid},</if>
+            <if test="loid!=null">LOID=#{loid},</if>
+            <if test="validState!=null">VALIDSTATE=#{validState},</if>
+        </trim>
+        where id=#{id}
+    </update>
+
+    <update id="increaseNum" parameterType="Integer">
+        update T_CPIC_CALLNUMCONFIG
+        set totalNum = totalNum + ${totalNum},
+            lmt      = sysdate,
+            TASKTIME = sysdate
+        where id = #{id}
+    </update>
+
+    <select id="queryCallMaxNum" parameterType="com.hy.cpic.entities.BranchCallNumConfig" resultType="Integer">
+        select nvl (sum (t.CALLMAXNUM),0)
+        from T_CPIC_BRANCHCALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.CALLNUMCONFIGID = #{callNumConfigId}
+        </if>
+        <if test="branchId!=null and branchId!=''">
+            and t.BRANCHID != #{branchId}
+        </if>
+    </select>
+
+    <select id="queryCallNumConfigByName"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.CallNumConfigPage">
+        select t.ID as id,t.NAME as name,
+        t.CALLMAXNUM as callMaxNum,t.PATH as path,t.REGEXP as regexp,t.BUSINESSTYPE as businessType, t.TOTALNUM as
+        totalNum,t.RULEID as ruleId,t.PROJECTID as projectId,t.EXECIP as execIp, t.REPEATNUM as repeatNum,t.FST as fst, t.LMT as lmt,
+        t.FOID as foid,t.LOID as loid
+        from T_CPIC_CALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="projectId!=null and projectId!=''">
+            and t.PROJECTID = #{projectId}
+        </if>
+        <if test="name!=null and name!=''">
+            and t.NAME = #{name}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="queryBranchCallNumConfigById" parameterType="com.hy.cpic.entities.BranchCallNumConfig"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select t.BRANCHID as branchId,t.BRANCHNAME as branchName,t.CALLNUM as callNum, t.TOTALNUM as totalNum,
+        t.CALLMAXNUM as callMaxNum,t.FST as fst,t.LMT as lmt,t.FOID as foid,t.LOID as loid,
+        t.CALLNUMCONFIGID as callNumConfigId
+        from T_CPIC_BRANCHCALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.CALLNUMCONFIGID = #{callNumConfigId}
+        </if>
+    </select>
+
+    <select id="queryCallNumConfigList"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.CallNumConfigPage">
+        select t.ID as id, t.NAME as name
+        from T_CPIC_CALLNUMCONFIG t
+        where t.VALIDSTATE != 'unValid'
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="queryTotalNum" parameterType="String" resultType="Integer">
+        select count(*)
+        from T_CPIC_INSUREDINTENTION t
+        where 1=1
+        <if test="callNumConfigId!=null and callNumConfigId!=''">
+            and t.CALLNUMCONFIGID = #{callNumConfigId}
+        </if>
+    </select>
+
+</mapper>

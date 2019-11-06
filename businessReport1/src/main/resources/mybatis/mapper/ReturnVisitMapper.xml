@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.ReturnVisitMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.ReturnVisitMetaInfo">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into
+        T_CPIC_RETURNVISIT(id,branchName,metaInfo,businessType,callNumConfigId,isWhiteList,fst,callNumber,carNumber,agentId,isRepeat,center,listId)
+        values(#{id},#{branchName},#{metaInfo},#{businessType},#{callNumConfigId},#{isWhiteList},#{fst},#{callNumber},#{carNumber},#{agentId},#{isRepeat},#{center},#{listId})
+    </insert>
+
+    <select id="getBranchCount" resultType="Integer">
+        select count(branchName)
+        FROM T_CPIC_RETURNVISIT t
+        WHERE t.isWhiteList = 'no'
+        and t.CALLNUMCONFIGID = #{callNumConfigId}
+        and t.branchName = #{branchName}
+        and ROWNUM &lt;= #{callMaxNum}
+    </select>
+
+    <select id="getAgentIdCount" resultType="Integer">
+        select count(AGENTID)
+        FROM T_CPIC_RETURNVISIT t
+        WHERE t.CALLNUMCONFIGID = #{callNumConfigId}
+        and t.AGENTID = #{agentId}
+        and ROWNUM &lt;= #{callMaxNum}
+    </select>
+
+    <select id="
+    sort" resultType="com.hy.cpic.entities.ReturnVisitMetaInfo">
+        select METAINFO
+        from (SELECT id, METAINFO
+        FROM T_CPIC_RETURNVISIT t
+        WHERE t.isWhiteList = 'no'
+        and t.CALLNUMCONFIGID = #{callNumConfigId}
+        and t.branchName = #{branchName})
+        where ROWNUM &lt;= #{callMaxNum}
+    </select>
+
+    <select id="sortPolling" resultType="com.hy.cpic.entities.ReturnVisitMetaInfo">
+        select * from
+        (select * from T_CPIC_RETURNVISIT t
+        order by row_number() over (PARTITION BY t.agentId ORDER BY t.agentId), t.agentId) where ROWNUM &lt;= #{callMaxNum}
+    </select>
+
+    <insert id="copyToHistory">
+        insert into T_CPIC_RETURNVISIT_HIS
+        select *
+        from T_CPIC_RETURNVISIT
+        where id = #{id}
+    </insert>
+
+    <delete id="deleteById">
+        delete
+        from T_CPIC_RETURNVISIT
+        where id = #{id}
+    </delete>
+
+    <select id="getRepeatCallNumber" resultType="string">
+        select CALLNUMBER
+        from T_CPIC_RETURNVISIT
+        where CALLNUMCONFIGID = #{callNumConfigId}
+        group by CALLNUMBER
+        having count(CALLNUMBER) >= #{repeatNum}
+    </select>
+
+    <insert id="moveRepeatCallNumber">
+        insert into T_CPIC_RETURNVISIT_HIS select * from T_CPIC_RETURNVISIT where CALLNUMBER in
+        <foreach
+            item="list" index="index" collection="list"
+            open="(" separator="," close=")">
+            #{list}
+        </foreach>
+        and CALLNUMCONFIGID = #{callNumConfigId}
+    </insert>
+
+    <insert id="clearRepeatCallNumber">
+        delete from T_CPIC_RETURNVISIT where CALLNUMBER in
+        <foreach
+            item="list" index="index" collection="list"
+            open="(" separator="," close=")">
+            #{list}
+        </foreach>
+        and CALLNUMCONFIGID = #{callNumConfigId}
+    </insert>
+
+    <select id="queryBranchNameByCallNumConfigId" resultType="com.hy.cpic.entities.ReturnVisitMetaInfo">
+        select distinct t.BRANCHNAME
+        from T_CPIC_RETURNVISIT t
+        where CALLNUMCONFIGID = #{callNumConfigId}
+    </select>
+
+    <select id="queryAgentIdByCallNumConfigId" resultType="com.hy.cpic.entities.ReturnVisitMetaInfo">
+        select distinct t.AGENTID
+        from T_CPIC_RETURNVISIT t
+        where CALLNUMCONFIGID = #{callNumConfigId}
+    </select>
+
+    <select id="queryBranchInfoByCallNumConfigId"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.BranchCallNumConfigPage">
+        select t.BRANCHNAME, count(BRANCHNAME) as callNum
+        from T_CPIC_CAS t
+        where CALLNUMCONFIGID = #{callNumConfigId}
+        group by t.BRANCHNAME
+    </select>
+
+    <select id="queryTotalNum" parameterType="String" resultType="Integer">
+        select count(*)
+        from T_CPIC_RETURNVISIT t
+        where t.CALLNUMCONFIGID = #{callNumConfigId}
+    </select>
+
+</mapper>

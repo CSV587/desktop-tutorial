@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.iom.mapper.oracle.CustomerInfoMapper">
+    <select id="getCustomerInfoByUUID" resultType="com.hy.iom.entities.CustomerInfo">
+        SELECT id, uuid, name, to_char(value), createtime
+        FROM T_IOM_CUSTOMERINFO_TMP
+        WHERE UUID = #{uuid}
+
+        union
+
+        SELECT id, uuid, name, to_char(value), createtime
+        FROM T_IOM_CUSTOMERINFO
+        WHERE UUID = #{uuid}
+    </select>
+
+</mapper>

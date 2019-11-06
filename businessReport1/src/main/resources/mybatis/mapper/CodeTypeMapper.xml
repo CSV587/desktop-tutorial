@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.CodeTypeMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.CodeType">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into T_CPIC_CODE_TYPE(ID,TYPE,CODE,CONTENT,REMARK,FST,LMT,FOID,LOID)
+        values(#{id},#{type},#{code},#{content},#{remark},#{fst},#{lmt},#{foid},#{loid})
+    </insert>
+
+    <update id="edit" parameterType="com.hy.cpic.entities.CodeType">
+        update T_CPIC_CODE_TYPE
+        <trim prefix="set" suffixOverrides=",">
+            <if test="id!=null">ID=#{id},</if>
+            <if test="type!=null">TYPE=#{type},</if>
+            <if test="code!=null">CODE=#{code},</if>
+            <if test="content!=null">CONTENT=#{content},</if>
+            <if test="remark!=null">REMARK=#{remark},</if>
+            <if test="fst!=null">FST=#{fst},</if>
+            <if test="lmt!=null">LMT=#{lmt},</if>
+            <if test="foid!=null">FOID=#{foid},</if>
+            <if test="loid!=null">LOID=#{loid},</if>
+        </trim>
+        where id=#{id}
+    </update>
+
+    <select id="queryCodeTypeList"
+            resultType="com.hy.cpic.reporting.codetype.page.CodeTypePage">
+        select
+        t.ID as id,
+        t.TYPE as type,
+        t.CODE as code,
+        t.CONTENT as content,
+        t.REMARK as remark,
+        t.FST as fst,
+        t.LMT as lmt,
+        t.FOID as foid,
+        t.LOID as loid
+        from T_CPIC_CODE_TYPE t
+        where 1=1
+        <if test="content!=null and content!=''">
+            and t.content = #{content}
+        </if>
+        order by to_char(t.LMT, 'YYYY-MM-DD') desc
+    </select>
+
+    <select id="queryCodeTypeById"
+            resultType="com.hy.cpic.reporting.codetype.page.CodeTypePage">
+        select
+        t.ID as id,
+        t.TYPE as type,
+        t.CODE as code,
+        t.CONTENT as content,
+        t.REMARK as remark,
+        t.FST as fst,
+        t.LMT as lmt,
+        t.FOID as foid,
+        t.LOID as loid
+        from T_CPIC_CODE_TYPE t
+        where t.ID = #{id}
+    </select>
+
+    <delete id="deleteCodeType" parameterType="com.hy.cpic.entities.CodeType">
+        delete from T_CPIC_CODE_TYPE
+        where id=#{id}
+    </delete>
+
+    <select id="queryCodeTypeByContent"
+            resultType="com.hy.cpic.reporting.codetype.page.CodeTypePage">
+        select t.ID as id,t.TYPE as type,t.CODE as code,t.CONTENT as content
+        from T_CPIC_CODE_TYPE t
+        where 1=1
+        <if test="type!=null and type!=''">
+            and t.type = #{type}
+        </if>
+        <if test="code!=null and code!=''">
+            and t.CODE = #{code}
+        </if>
+        <if test="content!=null and content!=''">
+            and t.CONTENT = #{content}
+        </if>
+    </select>
+
+</mapper>

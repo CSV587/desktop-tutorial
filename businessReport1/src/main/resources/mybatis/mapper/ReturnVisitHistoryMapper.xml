@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.ReturnVisitHistoryMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.ReturnVisitMetaInfoHistory">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into
+        T_CPIC_RETURNVISITHISTORY(id,BRANCHNAME,metaInfo,businessType,callNumConfigId,isWhiteList,fst,callNumber)
+        values(#{id},#{branchName},#{metaInfo},#{businessType},#{callNumConfigId},#{isWhiteList},#{fst},#{callNumber})
+    </insert>
+</mapper>

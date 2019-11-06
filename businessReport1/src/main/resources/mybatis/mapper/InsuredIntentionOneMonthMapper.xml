@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.InsuredIntentionOneMonthMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.InsuredIntentionOneMonth">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into T_CPIC_INTENTION_MONTH(id, callNumber, fst, times, isConnect, callResult, intentionLevel) values
+        (#{id}, #{callNumber}, #{fst}, #{times}, #{isConnect}, #{callResult}, #{intentionLevel})
+    </insert>
+
+    <update id="edit" parameterType="com.hy.cpic.entities.InsuredIntentionOneMonth">
+        update T_CPIC_INTENTION_MONTH
+        <trim prefix="set" suffixOverrides=",">
+            <if test="id!=null">id=#{id},</if>
+            <if test="callNumber!=null">callNumber=#{callNumber},</if>
+            <if test="fst!=null">fst=#{fst},</if>
+            <if test="times!=null">times=#{times},</if>
+        </trim>
+        where callNumber=#{callNumber}
+    </update>
+
+    <update id="updateTimes" parameterType="com.hy.cpic.entities.InsuredIntentionOneMonth">
+        update T_CPIC_INTENTION_MONTH
+        <trim prefix="set" suffixOverrides=",">
+            <if test="id!=null">id=#{id},</if>
+            <if test="callNumber!=null">callNumber=#{callNumber},</if>
+            <if test="fst!=null">fst=#{fst},</if>
+            times=times+1
+        </trim>
+        where callNumber=#{callNumber}
+        and fst <![CDATA[>=]]> to_date(to_char(#{fst},'yyyy-mm-dd'), 'yyyy-mm-dd')
+        and fst <![CDATA[<]]> to_date(to_char(#{fst}+1,'yyyy-mm-dd'), 'yyyy-mm-dd')
+    </update>
+
+    <select id="calledTimesByMonth"
+            resultType="com.hy.cpic.reporting.callnumconfig.insuredIntention.page.InsuredIntentionMonthInfo">
+        select CALLNUMBER, sum(times) as calledTimes
+        from T_CPIC_INTENTION_MONTH
+        where fst between to_date(to_char(sysdate-30,'yyyy-mm-dd'), 'yyyy-mm-dd') and sysdate
+        and CALLNUMBER in
+        <foreach
+            item="callNumberList" index="index" collection="callNumberList"
+            open="(" separator="," close=")">
+            #{callNumberList}
+        </foreach>
+        group by CALLNUMBER
+    </select>
+
+    <delete id="batchClearNotInMonth" parameterType="Integer">
+        delete from T_CPIC_INTENTION_MONTH where FST <![CDATA[<]]> to_date(to_char(sysdate-30,'yyyy-mm-dd'), 'yyyy-mm-dd')
+    </delete>
+
+    <resultMap id="detailByCallNumberResult" type="com.hy.cpic.entities.InsuredIntentionOneMonth">
+        <result column="fst" property="fst" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="detailByCallNumber" resultMap="detailByCallNumberResult">
+        select t.CALLNUMBER, t.ISCONNECT, t.CALLRESULT, t.INTENTIONLEVEL, t.FST
+        from T_CPIC_INTENTION_MONTH t
+        where t.CALLRESULT is not null
+        and t.ISCONNECT = 'connect'
+        and fst between to_date(to_char(sysdate - 30, 'yyyy-mm-dd'), 'yyyy-mm-dd') and sysdate
+        and CALLNUMBER in
+        <foreach
+            item="callNumberList" index="index" collection="callNumberList"
+            open="(" separator="," close=")">
+            #{callNumberList}
+        </foreach>
+    </select>
+
+</mapper>

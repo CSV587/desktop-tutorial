@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.mapper.oracle.PaperMapper">
+
+    <select id="selectPaperInfoByCondition" resultType="java.util.Map">
+        select id as "id",sort as "sort",name as "name",loid as "loid",to_char(createdate,'yyyy-MM-dd') as "createDate"
+        from T_BUSINESS_PAPER where 1=1
+        <if test="projectId != null and projectId != ''">
+            and projectId = #{projectId}
+        </if>
+        <if test="flowId != null and flowId != ''">
+            and flowId = #{flowId}
+        </if>
+        <if test="createDate != null and createDate != ''">
+            and TO_CHAR(createDate,'yyyy-MM-dd') = #{createDate}
+        </if>
+        <if test="name != null and name != ''">
+            and name like '%${name}%'
+        </if>
+        order by createdate desc
+    </select>
+
+    <insert id="addPaper" parameterType="com.hy.reporting.questionnaire.page.PaperPage">
+        insert into T_BUSINESS_PAPER(ID, SORT, SEQ, LOID, CREATEDATE, NAME, PROJECTID, FLOWID)
+        SELECT #{id},
+               #{sort},
+               #{seq},
+               #{loid},
+               TO_DATE(#{createDate}, 'yyyy-MM-dd hh24-mi-ss'),
+               #{name},
+               #{projectId},
+               #{flowId}
+        FROM DUAL
+    </insert>
+
+    <delete id="delPaperById" parameterType="String">
+        delete T_BUSINESS_PAPER
+        where ID = #{id}
+    </delete>
+
+    <select id="selectQuestionBySort" resultType="java.util.Map">
+        select createDate,questionId,loid,identifier from T_BUSINESS_QUESTION t WHERE 1=1
+        <if test="sort!=null and sort!=''">
+            and t.PAPERID = #{sort}
+        </if>
+        order by identifier asc
+    </select>
+
+    <select id="selectChildQuestionByParentId" parameterType="String"
+            resultType="com.hy.reporting.questionnaire.page.ChildQuestion2">
+        select childId   as "childId",
+               childName as "childName",
+               seq       as "seq",
+            condition as "condition", subjectivity as "subjectivity", identifier as "identifier", parentId as "parentId"
+        from T_BUSINESS_CHILDQUESTION
+        where parentId = #{id}
+        order by seq
+        desc
+    </select>
+
+    <insert id="addChildQuestion" parameterType="com.hy.reporting.questionnaire.page.ChildQuestion2">
+        insert into T_BUSINESS_CHILDQUESTION(CHILDID, CHILDNAME, CONDITION, SUBJECTIVITY, IDENTIFIER, SEQ, PARENTID)
+        SELECT #{childId},
+               #{childName},
+               #{condition},
+               #{subjectivity},
+               #{identifier},
+               CHILDQUESTION_SEQ.NEXTVAL,
+               #{parentId}
+        from dual
+    </insert>
+
+    <delete id="delChildQuestion" parameterType="String">
+        delete T_BUSINESS_CHILDQUESTION
+        where CHILDID = #{id}
+    </delete>
+
+    <select id="selectAllQuestionByPaperId" resultType="java.util.Map">
+        select questionid as "questionId", identifier as "identifier"
+        from T_BUSINESS_QUESTION
+        where paperid = #{id}
+        order by identifier asc
+    </select>
+
+    <select id="selectMaxIdentifier" resultType="java.util.Map">
+        select distinct max(identifier) as "count"
+        from T_BUSINESS_QUESTION
+        where paperid = #{sort}
+    </select>
+
+    <insert id="addQuestion" parameterType="com.hy.reporting.questionnaire.page.QuestionPage2">
+        insert into T_BUSINESS_QUESTION(ID, QUESTIONID, LOID, CREATEDATE, PAPERID, IDENTIFIER)
+        SELECT #{id},
+               #{questionId},
+               #{loid},
+               TO_DATE(#{createDate}, 'yyyy-MM-dd'),
+               #{paperId},
+               #{identifier}
+        from DUAL
+    </insert>
+
+    <delete id="delQuestion" parameterType="String">
+        delete T_BUSINESS_QUESTION
+        where questionId = #{questionId}
+    </delete>
+
+    <update id="saveChildQuestion" parameterType="com.hy.reporting.questionnaire.page.ChildQuestion2">
+        update T_BUSINESS_CHILDQUESTION
+        SET childname    = #{childName},
+            condition    = #{condition},
+            subjectivity = #{subjectivity},
+            identifier   = #{identifier},
+            parentid     = #{parentId}
+        where childid = #{childId}
+    </update>
+
+    <select id="editChildQuestion" resultType="com.hy.reporting.questionnaire.page.ChildQuestion2">
+        select cq.childId      as "childId",
+               cq.childName    as "childName",
+               cq.subjectivity as "subjectivity",
+               cq.condition    as "condition",
+               cq.identifier   as "identifier",
+               q.questionId    as "questionId"
+        from T_BUSINESS_CHILDQUESTION cq
+                 left join T_BUSINESS_QUESTION q on cq.parentId = q.questionId
+        where cq.childId = #{id}
+    </select>
+
+    <select id="hasChildQuestion" parameterType="String" resultType="int">
+        select count(1)
+        from T_BUSINESS_CHILDQUESTION
+        where parentId = #{id}
+          and seq <![CDATA[<>]]> 0
+    </select>
+
+    <select id="updateQuestionIdentifier">
+        update T_BUSINESS_QUESTION
+        set identifier = identifier - 1
+        where identifier &gt; #{idf}
+          and paperId =
+              (select paperId from T_BUSINESS_QUESTION where questionId = #{id})
+    </select>
+
+    <select id="updateChildQuestionIdentifier">
+        update T_BUSINESS_CHILDQUESTION
+        set identifier = identifier - 1
+        where identifier &gt; #{idf}
+          and parentId in (
+            select questionId
+            from T_BUSINESS_QUESTION
+            where paperId =
+                  (select paperId from T_BUSINESS_QUESTION where questionId = #{id})
+        )
+    </select>
+
+    <select id="sameNameJugde" resultType="int" parameterType="com.hy.reporting.questionnaire.page.PaperPage">
+        select count(1)
+        from T_BUSINESS_PAPER
+        where projectId = #{projectId}
+          and flowId = #{flowId}
+          and name = #{name}
+    </select>
+
+    <select id="selectChildQuestionByFlowId" resultType="com.hy.reporting.questionnaire.page.ChildQuestion4">
+        select childId as "childId", condition as "condition", parentId as "parentId"
+        from T_BUSINESS_CHILDQUESTION
+        where parentId in (
+            select questionId from T_BUSINESS_QUESTION where paperId = (
+            select SORT from T_BUSINESS_PAPER where flowId = #{flowId}
+            )
+            )
+        order by identifier asc, seq
+        desc
+    </select>
+
+    <select id="selectQuestionContentById" resultType="java.lang.String">
+        select subjectivity
+        from T_BUSINESS_CHILDQUESTION
+        where CHILDID = #{id}
+    </select>
+
+</mapper>

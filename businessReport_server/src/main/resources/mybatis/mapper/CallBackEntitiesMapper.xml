@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.mapper.oracle.CallBackEntitiesMapper">
+
+    <select id="queryAllPendingData" resultType="com.hy.reporting.callback.entities.CallBackEntities">
+        select id,
+               calltaskid     as callTask_id,
+               calltaskfiscid as callTask_fisc_id,
+               callouttype1,
+               callouttype2,
+               policyno,
+               applicantname,
+               applicantSex,
+               riskname,
+               effectdt,
+               nextdeductdt,
+               payabledt,
+               renewalpayableprem,
+               lastdeductdt,
+               deductaccount,
+               deductaccountcode,
+               graceperiodexpirydt,
+               applicantbirthday,
+               applicantcdtp,
+               applicantcdno,
+               payperiond,
+               deducterrnote,
+               deductbankname,
+               phones         as allPhones,
+               policyState,
+               custsameflag,
+               policyoverduestate,
+               insuredname,
+               lastcomplexapplydt,
+               insuredbirthday,
+               broadcastpolicystate,
+               policyacquisitiondate,
+               importdate,
+               distributedate,
+               distributeflag,
+               closedate,
+               callCount,
+               closeflag,
+               year
+        from T_BUSINESS_CALLBACK
+        where id in (
+            select t1.id
+            from (select * from t_business_callback) t1
+                     left join (
+                select applicantname, applicantcdno, applicantcdtp, count(*)
+                from t_business_callback
+                where CLOSEFLAG = 0
+                  and DISTRIBUTEFLAG = 0
+                group by applicantname, applicantcdno, applicantcdtp
+                having (count(*) = 1)) t2
+                               on t1.applicantname = t2.applicantname and t1.applicantcdno = t2.applicantcdno
+                                   and t1.applicantcdtp = t2.applicantcdtp
+            where t2.applicantname is not null
+              and t1.distributeflag = 0
+              and t1.closeflag = 0
+        )
+        order by CREATETIME asc
+    </select>
+
+    <update id="dealInvalidData">
+        update T_BUSINESS_CALLBACK
+        set DISTRIBUTEFLAG = 2,
+            DISTRIBUTEDATE = sysdate
+        where id in (
+            select t1.id
+            from (select * from t_business_callback) t1
+                     left join (
+                select applicantname, applicantcdno, applicantcdtp, count(*)
+                from t_business_callback
+                where CLOSEFLAG = 0
+                  and DISTRIBUTEFLAG = 0
+                group by applicantname, applicantcdno, applicantcdtp
+                having (count(*) > 1)) t2
+                               on t1.applicantname = t2.applicantname and t1.applicantcdno = t2.applicantcdno
+                                   and t1.applicantcdtp = t2.applicantcdtp
+            where t2.applicantname is not null
+        )
+          and DISTRIBUTEFLAG = 0
+    </update>
+
+
+    <update id="distributeData" parameterType="java.util.List">
+        update T_BUSINESS_CALLBACK
+        set DISTRIBUTEFLAG = 1,
+        DISTRIBUTEDATE = sysdate
+        where id in
+        <foreach collection="itemIds" item="employeeId"
+                 index="index" open="(" close=")" separator=",">
+            #{employeeId}
+        </foreach>
+        and DISTRIBUTEFLAG = 0
+    </update>
+
+
+    <select id="findByVisitValue" resultType="com.hy.entity.visithistory.VisitHistory">
+        select id             as id,
+               POLICYNO       as contNo,
+               CALLOUTTYPE1   as calloutType1,
+               CALLOUTTYPE2   as calloutType2,
+               APPLICANTNAME  as appCustName,
+               CALLTASKFISCID as callTaskId,
+               CALLCOUNT      as callCount
+        from T_BUSINESS_CALLBACK
+        where id = #{id}
+    </select>
+
+    <select id="queryInvalidData" resultType="com.hy.reporting.callback.entities.CallBackEntities">
+        select id             as id,
+               POLICYNO       as policyNo,
+               CALLOUTTYPE1   as calloutType1,
+               CALLOUTTYPE2   as calloutType2,
+               APPLICANTNAME  as applicantName,
+               CALLTASKFISCID as callTask_fisc_id,
+               CALLCOUNT      as callCount
+        from T_BUSINESS_CALLBACK
+        where (DISTRIBUTEFLAG = 2
+            and CLOSEFLAG = 0)
+           or (DISTRIBUTEFLAG = 1
+            and CLOSEFLAG = 0
+            and CALLTASKFISCID = #{returnTaskId}
+            and CALLTASKID = #{pushTaskId})
+    </select>
+
+    <update id="closePolicyNo">
+        update T_BUSINESS_CALLBACK
+        set CLOSEFLAG = #{flag},
+            CLOSEDATE = sysdate
+        where id = #{id}
+          and CLOSEFLAG = 0
+          and DISTRIBUTEFLAG != 0
+    </update>
+
+    <update id="terminate">
+        update T_BUSINESS_CALLBACK
+        set DISTRIBUTEFLAG = 2,
+            DISTRIBUTEDATE = sysdate
+        where CLOSEFLAG = 0
+          and DISTRIBUTEFLAG = 0
+          and CALLTASKID = #{pushTaskId}
+    </update>
+
+    <update id="terminateById">
+        update T_BUSINESS_CALLBACK
+        set DISTRIBUTEFLAG = 2,
+            DISTRIBUTEDATE = sysdate
+        where CLOSEFLAG = 0
+          and ID = #{id}
+    </update>
+
+
+    <select id="queryReconciliation" resultType="com.hy.reporting.reconciliation.page.ReconciliationPage">
+        select CALLTASKID as taskId,
+        count(1) as sum,
+        sum(case when CLOSEFLAG = 1 or CLOSEFLAG = 2 then 1 else 0 end) as finished,
+        sum(case when DISTRIBUTEFLAG = 0 then 1 else 0 end) as noStart,
+        sum(case when DISTRIBUTEFLAG = 1 and CLOSEFLAG = 0 then 1 else 0 end) as notEnd,
+        sum(case when DISTRIBUTEFLAG = 2 or CLOSEFLAG = 2 then 1 else 0 end) as retFailure,
+        sum(case when CLOSEFLAG = 1 then 1 else 0 end) as retSuccess,
+        to_char(CREATETIME, 'yyyy-MM-dd') as dayTime
+        from T_BUSINESS_CALLBACK
+        <where>
+            <if test="searchTime!=null and searchTime!='' ">
+                and to_char(CREATETIME, 'yyyy-MM-dd') = #{searchTime}
+            </if>
+            <if test="taskId!=null and taskId!=''">
+                and CALLTASKID = #{taskId}
+            </if>
+        </where>
+        group by CALLTASKID, to_char(CREATETIME, 'yyyy-MM-dd')
+        order by dayTime
+    </select>
+
+    <select id="findById" resultType="com.hy.reporting.callback.entities.CallBackEntities">
+        select *
+        from T_BUSINESS_CALLBACK
+        where id = #{id}
+    </select>
+</mapper>

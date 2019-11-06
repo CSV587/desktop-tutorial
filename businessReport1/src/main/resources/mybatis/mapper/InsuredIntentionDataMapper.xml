@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.InsuredIntentionDataMapper">
+
+    <select id="queryInsuredIntentionData"
+            resultType="com.hy.cpic.reporting.extractData.insuredIntention.page.InsuredIntentionDataPage">
+        select t.COLUMN1 as company,
+        t.COLUMN2 as activityName,
+        count(1) as calledCount,
+        (select count(1) from T_CPIC_INSUREDINTENTION t2
+        where t2.ACTIVITYNAME=t.COLUMN2
+        and t2.BRANCHNAME=t.COLUMN1)
+        as unCalledCount,
+        sum(case when t.COLUMN5 = '高级' then 1 else 0 end) as highLevelCount,
+        sum(case when t.COLUMN5 = '中级' then 1 else 0 end) as middleLevelCount,
+        sum(case when t.COLUMN5 = '低级' then 1 else 0 end) as lowLevelCount,
+        sum(case when t.COLUMN5 = '黑名单' then 1 else 0 end) as blackCount,
+        sum(case when t.COLUMN7 = '可接通' and t.COLUMN12='1' then 1 else 0 end) as hangupCount,
+        sum(case when t.COLUMN7 = '未接通' then 1 else 0 end) as unconnectedCount,
+        sum(case when t.COLUMN15 = '非秒挂未说话' and t.ISCONNECT='connect' and t.COLUMN12!='1' then 1 else 0 end) as
+        noRecognitionCount,
+        sum(case when t.ISCONNECT='connect' and t.COLUMN12!='1' and t.COLUMN5='接通' then 1 else 0 end) as noMatchCount
+        from (select /*+index(T_CPIC_RECORDINFO RSTINDEX)*/ T_CPIC_RECORDINFO.*,
+        row_number() over (partition by COLUMN4,COLUMN14 order by RECORDSTARTTIME desc) rowNumer
+        from T_CPIC_RECORDINFO
+        where PROTYPE = '投保意向'
+        and COLUMN1 is not null
+        and RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and RECORDSTARTTIME <![CDATA[<=]]> #{endTime}) t
+        where PROTYPE = '投保意向'
+        and t.COLUMN1 is not null
+        and t.rowNumer = 1
+        and t.RECORDSTARTTIME <![CDATA[>=]]> #{startTime}
+        and t.RECORDSTARTTIME <![CDATA[<=]]> #{endTime}
+        <if test="company!=null and company!=''">
+            and t.COLUMN1 = #{company}
+        </if>
+        <if test="activityName!=null and activityName!=''">
+            and t.COLUMN2 like '%'||#{activityName}||'%'
+        </if>
+        group by t.COLUMN1,t.COLUMN2
+    </select>
+
+    <select id="queryInsuredIntentionRecord"
+            resultType="com.hy.cpic.reporting.insuredIntentionRecord.page.InsuredIntentionRecordPage">
+        with CTE as (select r.*, row_number() over (partition by r.COLUMN4 order by r.RECORDSTARTTIME) row_number
+        from T_CPIC_RECORDINFO r
+        where r.PROTYPE = '投保意向'
+        and r.COLUMN1 is not null
+        and r.COLUMN16 is not null
+        <if test="company!=null and company!=''">
+            and r.COLUMN1 = #{company}
+        </if>
+        <if test="expireDate!=null and expireDate!=''">
+            and to_char(r.COLUMN16) like '%'|| #{expireDate} ||'%'
+        </if>
+        <if test="listType!=null and listType!=''">
+            and r.COLUMN17 = #{listType}
+        </if>)
+        select to_char(CHANNELSTARTTIME, 'yyyy-mm') as dateRange,
+        sum(case
+        when ISCONNECT = 'connect' and row_number = 1 then 1
+        else 0 end) as connectOnceCount,
+        sum(case
+        when ISCONNECT = 'connect' and row_number = 2 then 1
+        else 0 end) as connectTwiceCount,
+        sum(case
+        when ISCONNECT = 'unconnect' and row_number = 2 then 1
+        else 0 end) as unconnectCount,
+        sum(case
+        when ISCONNECT = 'connect' then 1
+        else 0 end) as connectTimes,
+        sum(case
+        when ISCONNECT = 'unconnect' then 1
+        else 0 end) as unconnectTimes,
+        sum(case
+        when ISCONNECT = 'connect' then (CHANNELENDTIME - CHANNELSTARTTIME) * 24 * 60 * 60
+        else 0 end) as connectLength,
+        sum(case
+        when ISCONNECT = 'connect' then (RECORDSTARTTIME - CHANNELSTARTTIME) * 24 * 60 * 60
+        else 0 end) as connectRingLength,
+        sum(case
+        when ISCONNECT = 'unconnect' then (CHANNELENDTIME - CHANNELSTARTTIME) * 24 * 60 * 60
+        else 0 end) as unconnectRingLength
+        from CTE
+        group by to_char(CHANNELSTARTTIME, 'yyyy-mm')
+    </select>
+
+</mapper>

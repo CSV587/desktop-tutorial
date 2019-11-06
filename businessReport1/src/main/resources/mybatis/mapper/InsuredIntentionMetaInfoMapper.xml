@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.InsuredIntentionMetaInfoMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.InsuredIntentionMetaInfo">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into
+        T_CPIC_INSUREDINTENTION(id,BRANCHNAME,metaInfo,businessType,callNumConfigId,expireDate,fst,callNumber,callNumber1,callNumber2,activityName)
+        values(#{id},#{branchName},#{metaInfo},#{businessType},#{callNumConfigId},#{expireDate},#{fst},#{callNumber},#{callNumber1},#{callNumber2},#{activityName})
+    </insert>
+
+    <select id="sort" resultType="com.hy.cpic.entities.InsuredIntentionMetaInfo">
+        select *
+        from (SELECT *
+        FROM T_CPIC_INSUREDINTENTION S
+        WHERE s.expireDate is not null
+        and s.CALLNUMCONFIGID = #{callNumConfigId}
+        and s.branchName = #{branchName}
+        <if test="businessTypes!=null">
+            and s.BUSINESSTYPE in
+            <foreach
+                item="businessTypes" index="index" collection="businessTypes"
+                open="(" separator="," close=")">
+                #{businessTypes}
+            </foreach>
+        </if>
+        ORDER BY DECODE(SIGN(TO_CHAR(s.expireDate, 'mm') - TO_CHAR(sysdate, 'mm')),
+        -1,
+        TO_CHAR(s.expireDate, 'mm') + '12',
+        TO_CHAR(s.expireDate, 'mm')) - TO_CHAR(sysdate, 'mm'), TO_CHAR(s.expireDate, 'DD'))
+        where ROWNUM &lt;= #{limit}
+    </select>
+
+    <insert id="copyToHistory">
+        insert into T_CPIC_INSUREDINTENTION_HIS
+        select *
+        from T_CPIC_INSUREDINTENTION
+        where id = #{id}
+    </insert>
+
+    <insert id="moveActivityName">
+        insert into T_CPIC_INSUREDINTENTION_HIS
+        select *
+        from T_CPIC_INSUREDINTENTION
+        where activityName = #{activityName}
+    </insert>
+
+    <delete id="deleteByActivityName">
+        delete
+        from T_CPIC_INSUREDINTENTION
+        where activityName = #{activityName}
+    </delete>
+
+    <delete id="deleteById">
+        delete
+        from T_CPIC_INSUREDINTENTION
+        where id = #{id}
+    </delete>
+
+    <select id="getRepeatCallNumber" resultType="string">
+        select CALLNUMBER
+        from T_CPIC_INSUREDINTENTION
+        where CALLNUMCONFIGID = #{callNumConfigId}
+        group by CALLNUMBER
+        having count(CALLNUMBER) >= #{repeatNum}
+    </select>
+
+    <select id="getActivityNameList" resultType="Hashmap">
+        select activityName as "activityName", count(activityName) as "num"
+        from T_CPIC_INSUREDINTENTION where ACTIVITYNAME is not null
+        group by activityName
+    </select>
+
+    <insert id="moveRepeatCallNumber">
+        insert into T_CPIC_INSUREDINTENTION_HIS select * from T_CPIC_INSUREDINTENTION where CALLNUMBER in
+        <foreach
+            item="list" index="index" collection="list"
+            open="(" separator="," close=")">
+            #{list}
+        </foreach>
+        and CALLNUMCONFIGID = #{callNumConfigId}
+    </insert>
+
+    <insert id="clearRepeatCallNumber">
+        delete from T_CPIC_INSUREDINTENTION where CALLNUMBER in
+        <foreach
+            item="list" index="index" collection="list"
+            open="(" separator="," close=")">
+            #{list}
+        </foreach>
+        and CALLNUMCONFIGID = #{callNumConfigId}
+    </insert>
+</mapper>

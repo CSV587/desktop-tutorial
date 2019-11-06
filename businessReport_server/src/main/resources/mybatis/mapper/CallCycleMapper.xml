@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.mapper.oracle.CallCycleMapper">
+
+    <select id="queryPushTask" resultType="java.util.Map">
+        select pushTaskId as "pushTaskId", pushTaskId as "pushTaskName"
+        from T_BUSINESS_CALLCYCLEMANAGE
+    </select>
+
+    <select id="queryReturnTask" resultType="java.util.Map">
+        select returnTaskId as "returnTaskId", returnTaskId as "returnTaskName"
+        from T_BUSINESS_CALLCYCLEMANAGE
+    </select>
+
+    <select id="queryList" resultType="com.hy.reporting.callcyclemanage.page.CallCyclePage"
+            parameterType="com.hy.reporting.callcyclemanage.page.CallCyclePage">
+        select id as "id", pushTaskId as "pushTaskId", returnTaskId as "returnTaskId", taskTotal as "taskTotal",
+        taskState as "taskState", to_char(startDate,'yyyy-mm-dd hh24:mi:ss') as "startDate",
+        to_char(endDate,'yyyy-mm-dd hh24:mi:ss') as "endDate",
+        to_char(newStartDate,'yyyy-mm-dd hh24:mi:ss') as "newStartDate",
+        to_char(newEndDate,'yyyy-mm-dd hh24:mi:ss') as "newEndDate", editor as "editor",
+        to_char(editDate,'yyyy-mm-dd hh24:mi:ss') as "editDate", callState as "callState"
+        from T_BUSINESS_CALLCYCLEMANAGE where 1=1
+        <if test="pushTaskId != null and pushTaskId != ''">
+            and pushTaskId = #{pushTaskId}
+        </if>
+        <if test="returnTaskId != null and returnTaskId != ''">
+            and returnTaskId = #{returnTaskId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            and startDate <![CDATA[>=]]> to_date(#{startDate},'yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            and endDate <![CDATA[<=]]> to_date(#{endDate},'yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="taskState != null and taskState != ''">
+            and taskState = #{taskState}
+        </if>
+    </select>
+
+    <select id="queryById" resultType="com.hy.reporting.callcyclemanage.page.CallCyclePage" parameterType="String">
+        select id as "id", pushTaskId as "pushTaskId", returnTaskId as "returnTaskId", taskTotal as "taskTotal",
+        taskState as "taskState", to_char(startDate,'yyyy-mm-dd hh24:mi:ss') as "startDate",
+        to_char(endDate,'yyyy-mm-dd hh24:mi:ss') as "endDate",
+        to_char(newStartDate,'yyyy-mm-dd hh24:mi:ss') as "newStartDate",
+        to_char(newEndDate,'yyyy-mm-dd hh24:mi:ss') as "newEndDate", editor as "editor",
+        to_char(editDate,'yyyy-mm-dd hh24:mi:ss') as "editDate" from T_BUSINESS_CALLCYCLEMANAGE
+        where 1=1
+        <if test="pushTaskId != null and pushTaskId != ''">
+            and pushTaskId = #{pushTaskId}
+        </if>
+    </select>
+
+    <update id="save" parameterType="com.hy.reporting.callcyclemanage.page.CallCyclePage">
+        update T_BUSINESS_CALLCYCLEMANAGE
+        set newStartDate = to_date(#{startDate}, 'yyyy-mm-dd hh24:mi:ss'),
+            newEndDate   = to_date(#{endDate}, 'yyyy-mm-dd hh24:mi:ss')
+        where pushTaskId = #{pushTaskId}
+    </update>
+
+    <update id="terminate" parameterType="String">
+        update T_BUSINESS_CALLCYCLEMANAGE
+        set callState = 1
+        where pushTaskId = #{pushTaskId}
+    </update>
+
+    <update id="updateEditorAndDate" parameterType="String">
+        update T_BUSINESS_CALLCYCLEMANAGE
+        set editor   = #{editorName},
+            editDate = to_date(#{date}, 'yyyy-mm-dd hh24:mi:ss')
+        where pushTaskId = #{pushTaskId}
+    </update>
+
+    <update id="invalidCallCycle">
+        update T_BUSINESS_CALLCYCLEMANAGE
+        set TASKSTATE = 1
+        where id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hy.cpic.mapper.oracle.ReturnVisitInOneMonthMapper">
+
+    <insert id="save" parameterType="com.hy.cpic.entities.ReturnVisitInOneMonth">
+        <selectKey keyProperty="id" resultType="string" order="BEFORE">
+            select sys_guid() as id from DUAL
+        </selectKey>
+        insert into
+        T_CPIC_RETURNVISITINONEMONTH(id,callNumber,fst)
+        values(#{id},#{callNumber},#{fst})
+    </insert>
+
+    <select id="withinOneMonth" resultType="Integer">
+        select count(*)
+        from T_CPIC_RETURNVISITINONEMONTH t
+        where t.FST
+        between  to_date(to_char(sysdate-30,'yyyy-mm-dd'), 'yyyy-mm-dd') and sysdate
+        and t.CALLNUMBER = #{callNumber}
+    </select>
+</mapper>

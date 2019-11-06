@@ -1,0 +1,86 @@
+server:
+    port: 8090
+    servlet:
+        context-path: /cpic
+
+spring:
+    datasource:
+        username: icm
+        password: icm
+        url: jdbc:oracle:thin:@172.16.18.29:1521:orcl
+        driver-class-name: oracle.jdbc.OracleDriver
+        initialization-mode: never
+        schema: classpath*:sql/*.sql
+        type: com.alibaba.druid.pool.DruidDataSource
+    #        jndi-name: java:comp/env/jdbc/ccrobot
+    jpa:
+        show-sql: true
+    jmx:
+        default-domain: cpic
+    kafka:
+        bootstrap-servers: 172.16.18.151:9092,172.16.18.157:9092,172.16.18.215:9092
+        producer:
+            batch-size: 16384
+            retries: 0
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+            buffer-memory: 33554432
+        consumer:
+            group-id: cpic
+            auto-offset-reset: earliest
+    resources:
+        static-locations: classpath:static,classpath:templates
+
+logging:
+    config: classpath:logback.xml
+
+mybatis:
+    config-location: classpath:mybatis/mybatis-config.xml
+    mapper-locations: classpath:mybatis/mapper/*Mapper.xml
+mapper:
+    mappers: com.hy.cpic.mapper.IomMapper
+    notEmpty: false
+    before: true
+pagehelper:
+    helper-dialect: oracle
+    reasonable: true
+    support-methods-arguments: true
+    params: pageNum=current #pageNum=pageNum;pageSize=pageSize;count=countSql;reasonable=reasonable;pageSizeZero=pageSizeZero。
+
+voice:
+    bitRate: 4000
+    channels: 2
+    samplingRate: 8000
+    ffmpegPath: D:\\work\\workspace\\cpic\\tool\\ffmpeg.exe
+
+import:
+    oracle:
+        cron: 45 * * * * SUN-SAT
+        projectMaps: '{"21144922-b3ed-4530-964d-43a123739dd9":"投保意向",
+         "b5489e39-cf46-407d-9dfb-97b84f677667":"车险回访",
+         "2c90921765470f2701654710b2aa0029":"车险订单",
+         "97f062ee-865c-45de-9c89-05afd38a5555":"寿险营销"}'
+        endNodeNames: 不愿意核对-续保-结束语,结束语1,结束语2,结束语3,结束语4,结束语5,核对非车信息-结束语
+        #回访回写临时路径
+        tmpPath: /Users/lxg/Downloads
+        #回访回写最终路径
+        destPath: /Users/lxg/Downloads/callinfo
+        #投保意向回写临时路径
+        tmpPath1: /Users/lxg/Downloads
+        #投保意向回写最终路径
+        destPath1: /Users/lxg/Downloads/callinfo
+        #回访回写时间表达式
+        cron1: 0 0 1 * * SUN-SAT
+        #投保意向回写时间表达式
+        cron2: 0 0 1 * * SUN-SAT
+        groupId: cpic
+        topic: recordInfo
+        overTopic: overConcurrent
+
+system:
+    ipm: http://service.haoyitec.cn/ipm/
+    icm: http://service.haoyitec.cn/icm/
+    iom: http://service.haoyitec.cn/iom/
+    site: http://service.haoyitec.cn/site/site/getSite
+    unrealNumber:
+        path: C:/upload/unrealNumberFile/

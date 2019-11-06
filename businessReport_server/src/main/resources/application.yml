@@ -1,0 +1,49 @@
+spring:
+    datasource:
+        username: icm
+        password: icm
+        url: jdbc:oracle:thin:@172.16.18.230:1521:orcl
+        driver-class-name: oracle.jdbc.OracleDriver
+        initialization-mode: never
+        schema:
+            - classpath*:sql/*.sql
+        type: com.alibaba.druid.pool.DruidDataSource
+    #        jndi-name: java:comp/env/jdbc/ccrobot
+    jpa:
+        show-sql: true
+        hibernate:
+            ddl-auto: validate
+    jmx:
+        default-domain: demo
+    kafka:
+        bootstrap-servers: 172.16.18.151:9092,172.16.18.157:9092,172.16.18.215:9092
+        producer:
+            batch-size: 16384
+            retries: 0
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+            buffer-memory: 33554432
+        consumer:
+            group-id: demo
+            auto-offset-reset: earliest
+        listener:
+            type: batch
+            concurrency: 1
+
+zk:
+    scheduler:
+        zk:
+            url: 172.16.18.215:12181
+
+mybatis:
+    config-location: classpath:mybatis/mybatis-config.xml
+    mapper-locations: classpath:mybatis/mapper/*Mapper.xml
+mapper:
+    mappers: com.hy.mapper.BaseMapper
+    notEmpty: false
+    before: true
+pagehelper:
+    helper-dialect: oracle
+    reasonable: true
+    support-methods-arguments: true
+    params: pageNum=current #pageNum=pageNum;pageSize=pageSize;count=countSql;reasonable=reasonable;pageSizeZero=pageSizeZero。
