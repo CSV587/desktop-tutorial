@@ -17,8 +17,8 @@ public class SynchronizedDemo {
 //    public synchronized void func1 (){ //它和同步代码块一样，作用于同一个对象。
 //    public synchronized static void func1 (){ //作用于整个类
     public void func1() {
-//        synchronized (SynchronizedDemo.class) { //作用于整个类，也就是说两个线程调用同一个类的不同对象上的这种同步语句，也会进行同步。
-        synchronized (this) { //只作用于同一个对象，如果调用两个对象上的同步代码块，就不会进行同步。
+        synchronized (SynchronizedDemo.class) { //作用于整个类，也就是说两个线程调用同一个类的不同对象上的这种同步语句，也会进行同步。
+//        synchronized (this) { //只作用于同一个对象，如果调用两个对象上的同步代码块，就不会进行同步。
             for (int i = 0; i < 10; i++) {
                 System.out.print(i + " ");
             }
@@ -35,5 +35,7 @@ public class SynchronizedDemo {
         ExecutorService executorService = Executors.newCachedThreadPool();
         executorService.execute(() -> e1.func1());
         executorService.execute(() -> e2.func1());
+        executorService.shutdown();
     }
+
 }

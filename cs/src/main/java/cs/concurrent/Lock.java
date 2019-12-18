@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 代码块的访问等待设置超时时间是不可能的事情。
  synchronized 块必须被完整地包含在单个方法里。而一个 Lock 对象可以把它的 lock()
 和 unlock() 方法的调用放在不同的方法里。
- */
+*/
 
 public class Lock {
 

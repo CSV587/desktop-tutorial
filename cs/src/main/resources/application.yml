@@ -19,3 +19,14 @@ spring:
         max-wait: 10000
     # 连接超时时间（毫秒）
     timeout: 0
+
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://192.168.144.128:3306/reakt?characterEncoding=utf8&characterSetResults=utf8&useSSL=false
+    username: root
+    password: root
+
+mybatis:
+  config-location: classpath:mybatis-config.xml
+  mapper-locations: classpath:mapper/*Mapper.xml
+

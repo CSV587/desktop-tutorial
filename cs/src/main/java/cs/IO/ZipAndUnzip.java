@@ -88,7 +88,7 @@ public class ZipAndUnzip {
 //        ZipFile zipFile = new ZipFile(zipPath, Charset.forName("GBK"));//压缩文件的实列,并设置编码
         ZipFile zipFile = new ZipFile(zipPath);
         //获取压缩文中的所有项
-        for (Enumeration<ZipEntry> enumeration = (Enumeration<ZipEntry>) zipFile.entries(); enumeration.hasMoreElements(); ) {
+        for (Enumeration<ZipEntry> enumeration = (Enumeration<ZipEntry>) zipFile.entries(); enumeration.hasMoreElements();) {
             ZipEntry zipEntry = enumeration.nextElement();//获取元素
             if (zipEntry.isDirectory()) {
                 new File(unzipedFilePath + zipEntry.getName()).mkdirs();

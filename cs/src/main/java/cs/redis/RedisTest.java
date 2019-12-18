@@ -99,10 +99,11 @@ public class RedisTest {
 //        ScanResult<String> sr = jedis.scan("0",sp);
 //        System.out.println(sr.getResult());
 
-//       System.out.println(jedis.info());
+//        System.out.println(jedis.info());
 
 //        jedis.flushDB();
 //        jedis.flushAll();
+//        jedis.save();
 
     }
 

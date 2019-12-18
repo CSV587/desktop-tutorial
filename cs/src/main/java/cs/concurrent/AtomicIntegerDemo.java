@@ -1,6 +1,5 @@
 package cs.concurrent;
 
-import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -23,7 +22,7 @@ public class AtomicIntegerDemo {
         Thread[] threads = new Thread[THREADS_CONUT];
         for (int i = 0; i < THREADS_CONUT; i++) {
             threads[i] = new Thread(() -> {
-                for (int i1 = 0; i1 < 100000; i1++) {
+                for (int j = 0; j < 100000; j++) {
                     increase();
                 }
             });

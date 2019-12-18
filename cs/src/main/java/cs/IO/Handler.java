@@ -26,10 +26,8 @@ public class Handler implements Runnable {
         c.configureBlocking(false);
         // Optionally try first read now
         sk = channel.register(selector, 0);
-
         //将Handler作为callback对象
         sk.attach(this);
-
         //第二步,注册Read就绪事件
         sk.interestOps(SelectionKey.OP_READ);
         selector.wakeup();
@@ -43,7 +41,6 @@ public class Handler implements Runnable {
 
     boolean outputIsComplete()
     {
-
         /* ... */
         return false;
     }
@@ -75,12 +72,9 @@ public class Handler implements Runnable {
         channel.read(input);
         if (inputIsComplete())
         {
-
             process();
-
             state = SENDING;
             // Normally also do first write now
-
             //第三步,接收write就绪事件
             sk.interestOps(SelectionKey.OP_WRITE);
         }
@@ -89,13 +83,11 @@ public class Handler implements Runnable {
     void send() throws IOException
     {
         channel.write(output);
-
         //write完就结束了, 关闭select key
         if (outputIsComplete())
         {
             sk.cancel();
         }
     }
-
 
 }

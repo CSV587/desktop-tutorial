@@ -28,7 +28,9 @@ public class CallableDemo implements Callable<Integer> { //与 Runnable 相比�
         FutureTask<Integer> ft = new FutureTask<>(callableDemo);
         Thread thread = new Thread(ft);
         thread.start();
-        System.out.println(ft.get()); }
+        System.out.println(ft.get());
+    }
+
 }
 
 /*

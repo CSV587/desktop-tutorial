@@ -20,14 +20,16 @@ public class Reactor implements Runnable{
     final ServerSocketChannel serverSocket;
 
     Reactor(int port) throws IOException
-    { //Reactor初始化
+    {   //Reactor初始化
+        //获取选择器
         selector = Selector.open();
+        //获取通道
         serverSocket = ServerSocketChannel.open();
+        //绑定连接
         serverSocket.socket().bind(new InetSocketAddress(port));
         //设置非阻塞
         serverSocket.configureBlocking(false);
-
-        //分步处理,第一步,接收accept事件
+        //分步处理,第一步,将通道注册到选择器上,并注册“接收”操作,接收accept事件
         SelectionKey sk =
                 serverSocket.register(selector, SelectionKey.OP_ACCEPT);
         //attach callback object, Acceptor

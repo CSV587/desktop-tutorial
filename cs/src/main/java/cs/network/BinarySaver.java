@@ -10,6 +10,8 @@ import java.nio.charset.MalformedInputException;
  * @Date : Created by cs on 2019/10/23.
  * @Description :
  */
+
+//从web网站下载二进制文件并保存至硬盘
 public class BinarySaver {
 
     public static void main(String[] args){

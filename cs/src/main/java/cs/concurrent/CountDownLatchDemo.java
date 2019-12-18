@@ -32,10 +32,10 @@ class Waiter implements Runnable{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
         System.out.println("Waiter Released");
     }
 }
+
 class Decrementer implements Runnable {
     CountDownLatch latch = null;
     public Decrementer(CountDownLatch latch) {
@@ -45,13 +45,13 @@ class Decrementer implements Runnable {
         try {
             Thread.sleep(1000);
             this.latch.countDown();
-            System.out.println("latch - 1");
+            System.out.println("latch-1");
             Thread.sleep(1000);
             this.latch.countDown();
-            System.out.println("latch - 1");
+            System.out.println("latch-1");
             Thread.sleep(1000);
             this.latch.countDown();
-            System.out.println("latch - 1");
+            System.out.println("latch-1");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
